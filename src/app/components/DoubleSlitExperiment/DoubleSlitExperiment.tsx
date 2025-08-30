@@ -21,7 +21,7 @@ export default function DoubleSlitExperiment() {
     canvas.height = 384; // 4:3 aspect ratio to match 20x15 geometry
     const ctx = canvas.getContext('2d')!;
 
-    // Fill with dark background
+    // Fill with dark background (same gray as default material: 0x333333)
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -84,6 +84,7 @@ export default function DoubleSlitExperiment() {
         const stripeTexture = createStripeTexture();
         const stripeMaterial = new THREE.MeshBasicMaterial({
           map: stripeTexture,
+          color: 0x727272, // Very slightly darker gray for fine-tuned brightness
           side: THREE.DoubleSide
         });
         detectionScreenRef.current.material = stripeMaterial;
