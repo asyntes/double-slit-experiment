@@ -14,26 +14,22 @@ import { updateGeneratorLabel } from './components/SceneLabels';
 export default function DoubleSlitExperiment() {
   const [activePhase, setActivePhase] = useState('proton');
 
-  // Create stripe texture function
   const createStripeTexture = (): THREE.CanvasTexture => {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
-    canvas.height = 384; // 4:3 aspect ratio to match 20x15 geometry
+    canvas.height = 384;
     const ctx = canvas.getContext('2d')!;
 
-    // Fill with dark background (same gray as default material: 0x333333)
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Calculate stripe dimensions
     const totalWidth = canvas.width;
-    const stripeRegionWidth = totalWidth * 0.5; // 10 units out of 20 = half width
-    const stripeRegionStart = (totalWidth - stripeRegionWidth) / 2; // Center the stripes
-    const stripeHeight = canvas.height * (4 / 15); // 4 units out of 15 = same height as trapezoid base
-    const stripeRegionTop = (canvas.height - stripeHeight) / 2; // Center vertically
+    const stripeRegionWidth = totalWidth * 0.5;
+    const stripeRegionStart = (totalWidth - stripeRegionWidth) / 2;
+    const stripeHeight = canvas.height * (4 / 15);
+    const stripeRegionTop = (canvas.height - stripeHeight) / 2;
 
-    // Draw alternating white stripes
-    const stripeWidth = stripeRegionWidth / 20; // Create 20 stripes for good visibility
+    const stripeWidth = stripeRegionWidth / 20;
     ctx.fillStyle = '#ffffff';
 
     for (let i = 0; i < 20; i += 2) {
@@ -62,7 +58,6 @@ export default function DoubleSlitExperiment() {
     sceneReady
   } = useThreeScene();
 
-  // Log when scene is ready
   useEffect(() => {
     if (sceneReady) {
       console.log('Scene ready, particle system available:', !!particleSystemRef.current);
@@ -74,17 +69,15 @@ export default function DoubleSlitExperiment() {
     if (lightConeRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && sceneRef.current && detectionScreenRef.current) {
       const showLightElements = activePhase === 'lightwave';
 
-      // Control visibility of light elements
       lightConeRef.current.visible = showLightElements;
       leftTrapezoidRef.current.visible = showLightElements;
       rightTrapezoidRef.current.visible = showLightElements;
 
-      // Switch detection screen material based on phase
       if (activePhase === 'lightwave') {
         const stripeTexture = createStripeTexture();
         const stripeMaterial = new THREE.MeshBasicMaterial({
           map: stripeTexture,
-          color: 0x727272, // Very slightly darker gray for fine-tuned brightness
+          color: 0x727272,
           side: THREE.DoubleSide
         });
         detectionScreenRef.current.material = stripeMaterial;
@@ -126,7 +119,6 @@ export default function DoubleSlitExperiment() {
   const handlePhaseChange = (phase: string) => {
     console.log('Phase changing to:', phase);
 
-    // Update phase first
     setActivePhase(phase);
 
     if (!particleSystemRef.current) {
@@ -140,11 +132,9 @@ export default function DoubleSlitExperiment() {
     } else if (phase === 'proton') {
       console.log('Switching to proton: clearing and restarting');
       particleSystemRef.current.clearAllParticles();
-      // Immediately create new particles without timeout
       particleSystemRef.current.createInitialProtons(50);
       console.log('New protons created:', particleSystemRef.current.getParticleCount());
     } else {
-      // For other phases, just clear particles
       particleSystemRef.current.clearAllParticles();
     }
   };
