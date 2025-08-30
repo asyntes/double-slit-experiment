@@ -19,6 +19,8 @@ export const useThreeScene = () => {
   const rightTrapezoidRef = useRef<THREE.Mesh | null>(null);
   const labelsRef = useRef<THREE.Group[]>([]);
   const particleSystemRef = useRef<ParticleSystem | null>(null);
+  const defaultScreenMaterialRef = useRef<THREE.Material | null>(null);
+  const stripeScreenMaterialRef = useRef<THREE.Material | null>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -62,7 +64,7 @@ export const useThreeScene = () => {
     controls.minDistance = 1;
     controls.maxDistance = 60;
     controlsRef.current = controls;
-    
+
     console.log('Three.js setup complete - Camera:', camera.position, 'Target:', controls.target);
 
     // Create experiment setup
@@ -80,13 +82,13 @@ export const useThreeScene = () => {
     // Create particle system
     const particleSystem = new ParticleSystem(scene);
     particleSystemRef.current = particleSystem;
-    
+
     // Create initial protons for proton phase
     particleSystem.createInitialProtons(50);
 
     console.log('Experiment setup complete, scene objects:', scene.children.length);
     console.log('Initial particles created:', particleSystem.getParticleCount());
-    
+
     setSceneReady(true);
 
     return () => {

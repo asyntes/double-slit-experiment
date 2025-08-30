@@ -77,7 +77,7 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
     side: THREE.DoubleSide
   });
   const lightCone = new THREE.Mesh(coneGeometry, coneMaterial);
-  
+
   // Position the cone so the tip is at the generator (z=0) and base is at diffraction panel (z=15)
   lightCone.position.set(0, 0, coneHeight / 2);
   lightCone.rotation.x = -Math.PI / 2; // Rotate to point towards positive Z (towards slits)
@@ -86,27 +86,27 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
 
   // Create trapezoid shape for diffraction pattern
   const createTrapezoidGeometry = (
-    baseWidth: number, 
-    topWidth: number, 
-    height: number, 
+    baseWidth: number,
+    topWidth: number,
+    height: number,
     depth: number
   ): THREE.BufferGeometry => {
     const geometry = new THREE.BufferGeometry();
-    
+
     // Define vertices for a trapezoid (8 vertices for a 3D trapezoid)
     // baseWidth = small base (at slit), topWidth = large base (at screen)
     const vertices = new Float32Array([
       // Front face (small base at z=0 - will be at slits)
-      -baseWidth/2, -height/2, 0,  // bottom left (small)
-       baseWidth/2, -height/2, 0,  // bottom right (small)
-       baseWidth/2,  height/2, 0,  // top right (small)
-      -baseWidth/2,  height/2, 0,  // top left (small)
-      
+      -baseWidth / 2, -height / 2, 0,  // bottom left (small)
+      baseWidth / 2, -height / 2, 0,  // bottom right (small)
+      baseWidth / 2, height / 2, 0,  // top right (small)
+      -baseWidth / 2, height / 2, 0,  // top left (small)
+
       // Back face (large base at z=depth - will be at detection screen)
-      -topWidth/2, -height/2, depth,  // bottom left (large)
-       topWidth/2, -height/2, depth,  // bottom right (large)
-       topWidth/2,  height/2, depth,  // top right (large)
-      -topWidth/2,  height/2, depth,  // top left (large)
+      -topWidth / 2, -height / 2, depth,  // bottom left (large)
+      topWidth / 2, -height / 2, depth,  // bottom right (large)
+      topWidth / 2, height / 2, depth,  // top right (large)
+      -topWidth / 2, height / 2, depth,  // top left (large)
     ]);
 
     // Define faces using indices
@@ -128,7 +128,7 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
     geometry.setIndex(new THREE.BufferAttribute(indices, 1));
     geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geometry.computeVertexNormals();
-    
+
     return geometry;
   };
 
