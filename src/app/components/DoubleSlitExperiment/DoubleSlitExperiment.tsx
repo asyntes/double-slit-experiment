@@ -61,16 +61,19 @@ export default function DoubleSlitExperiment() {
     controls.maxDistance = 60;
     controlsRef.current = controls;
 
-    // Adjust camera distance and position based on orientation
+    // Adjust scene position and camera distance based on orientation
     const isPortrait = window.innerHeight > window.innerWidth;
     if (isPortrait) {
-      // Calculate direction from target to camera and normalize
+      // Check for low-height portrait devices (like iPhone SE)
+      const isLowHeightDevice = window.innerHeight <= 667; // iPhone SE height threshold
+      const sceneOffset = isLowHeightDevice ? 12 : 5; // Move scene up more for low-height devices
+      
+      // Move the entire scene upward
+      scene.position.y += sceneOffset;
+      
+      // Set camera to max distance (60) for portrait mode
       const direction = camera.position.clone().sub(controls.target).normalize();
-      // Set camera at max distance (60) from target
       camera.position.copy(controls.target).add(direction.multiplyScalar(60));
-      // Move camera down to show scene higher on screen
-      camera.position.y -= 8;
-      // Update controls to reflect the new camera position
       controls.update();
     }
 
@@ -81,10 +84,32 @@ export default function DoubleSlitExperiment() {
     });
 
     const handleResize = () => {
-      if (!cameraRef.current || !rendererRef.current) return;
+      if (!cameraRef.current || !rendererRef.current || !sceneRef.current) return;
+      
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(window.innerWidth, window.innerHeight);
+      
+      // Reset scene position first
+      sceneRef.current.position.y = 0;
+      
+      // Reapply scene positioning and camera distance for portrait mode
+      const isPortrait = window.innerHeight > window.innerWidth;
+      if (isPortrait) {
+        // Check for low-height portrait devices (like iPhone SE)
+        const isLowHeightDevice = window.innerHeight <= 667; // iPhone SE height threshold
+        const sceneOffset = isLowHeightDevice ? 12 : 5; // Move scene up more for low-height devices
+        
+        // Move the entire scene upward
+        sceneRef.current.position.y += sceneOffset;
+        
+        // Set camera to max distance (60) for portrait mode
+        if (controlsRef.current) {
+          const direction = cameraRef.current.position.clone().sub(controlsRef.current.target).normalize();
+          cameraRef.current.position.copy(controlsRef.current.target).add(direction.multiplyScalar(60));
+          controlsRef.current.update();
+        }
+      }
     };
 
     window.addEventListener('resize', handleResize);
