@@ -22,6 +22,8 @@ export default function DoubleSlitExperiment() {
     detectionScreenRef,
     diffractionPanelRef,
     lightConeRef,
+    leftTrapezoidRef,
+    rightTrapezoidRef,
     labelsRef,
     particleSystemRef,
     sceneReady
@@ -34,17 +36,21 @@ export default function DoubleSlitExperiment() {
     }
   }, [sceneReady]);
 
-  // Handle light cone visibility and generator label based on active phase
+  // Handle light cone, trapezoids visibility and generator label based on active phase
   useEffect(() => {
-    if (lightConeRef.current && sceneRef.current) {
-      const showCone = activePhase === 'lightwave';
-      lightConeRef.current.visible = showCone;
+    if (lightConeRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && sceneRef.current) {
+      const showLightElements = activePhase === 'lightwave';
+      
+      // Control visibility of light elements
+      lightConeRef.current.visible = showLightElements;
+      leftTrapezoidRef.current.visible = showLightElements;
+      rightTrapezoidRef.current.visible = showLightElements;
       
       // Update generator label based on phase
       const labelText = activePhase === 'lightwave' ? 'Light Generator' : 'Particle Generator';
       updateGeneratorLabel(sceneRef.current, labelText);
       
-      console.log('Light cone visibility:', showCone, 'Generator label:', labelText, 'for phase:', activePhase);
+      console.log('Light elements visibility:', showLightElements, 'Generator label:', labelText, 'for phase:', activePhase);
     }
   }, [activePhase, sceneReady]);
 

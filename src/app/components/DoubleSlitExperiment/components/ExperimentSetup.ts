@@ -84,5 +84,75 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   lightCone.visible = false; // Initially hidden
   scene.add(lightCone);
 
-  return { detectionScreen, diffractionPanelGroup, lightCone };
+  // Create trapezoid shape for diffraction pattern
+  const createTrapezoidGeometry = (
+    baseWidth: number, 
+    topWidth: number, 
+    height: number, 
+    depth: number
+  ): THREE.BufferGeometry => {
+    const geometry = new THREE.BufferGeometry();
+    
+    // Define vertices for a trapezoid (8 vertices for a 3D trapezoid)
+    // baseWidth = small base (at slit), topWidth = large base (at screen)
+    const vertices = new Float32Array([
+      // Front face (small base at z=0 - will be at slits)
+      -baseWidth/2, -height/2, 0,  // bottom left (small)
+       baseWidth/2, -height/2, 0,  // bottom right (small)
+       baseWidth/2,  height/2, 0,  // top right (small)
+      -baseWidth/2,  height/2, 0,  // top left (small)
+      
+      // Back face (large base at z=depth - will be at detection screen)
+      -topWidth/2, -height/2, depth,  // bottom left (large)
+       topWidth/2, -height/2, depth,  // bottom right (large)
+       topWidth/2,  height/2, depth,  // top right (large)
+      -topWidth/2,  height/2, depth,  // top left (large)
+    ]);
+
+    // Define faces using indices
+    const indices = new Uint16Array([
+      // Front face
+      0, 1, 2, 0, 2, 3,
+      // Back face  
+      4, 7, 6, 4, 6, 5,
+      // Left face
+      0, 3, 7, 0, 7, 4,
+      // Right face
+      1, 5, 6, 1, 6, 2,
+      // Top face
+      3, 2, 6, 3, 6, 7,
+      // Bottom face
+      0, 4, 5, 0, 5, 1
+    ]);
+
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+    
+    return geometry;
+  };
+
+  // Diffraction trapezoids for light wave phase
+  const trapezoidMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff0000,
+    transparent: true,
+    opacity: 0.3,
+    side: THREE.DoubleSide
+  });
+
+  // Left trapezoid (from left slit) - base exactly matches slit dimensions
+  const leftTrapezoidGeometry = createTrapezoidGeometry(1, 8, 4, 15); // small base=1x4 (slit), large base=8x4 (screen), depth=15
+  const leftTrapezoid = new THREE.Mesh(leftTrapezoidGeometry, trapezoidMaterial);
+  leftTrapezoid.position.set(-1, 0, 15); // Small base starts exactly at diffraction panel (z=15)
+  leftTrapezoid.visible = false;
+  scene.add(leftTrapezoid);
+
+  // Right trapezoid (from right slit) - base exactly matches slit dimensions  
+  const rightTrapezoidGeometry = createTrapezoidGeometry(1, 8, 4, 15); // small base=1x4 (slit), large base=8x4 (screen), depth=15
+  const rightTrapezoid = new THREE.Mesh(rightTrapezoidGeometry, trapezoidMaterial);
+  rightTrapezoid.position.set(1, 0, 15); // Small base starts exactly at diffraction panel (z=15)
+  rightTrapezoid.visible = false;
+  scene.add(rightTrapezoid);
+
+  return { detectionScreen, diffractionPanelGroup, lightCone, leftTrapezoid, rightTrapezoid };
 };
