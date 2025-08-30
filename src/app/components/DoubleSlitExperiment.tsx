@@ -176,26 +176,26 @@ export default function DoubleSlitExperiment() {
 
 
   const createSingleParticle = (scene: THREE.Scene) => {
-    // Create red particles
-    const geometry = new THREE.SphereGeometry(0.1, 8, 6);
+    // Create red particles - smaller size
+    const geometry = new THREE.SphereGeometry(0.05, 8, 6);
     const material = new THREE.MeshBasicMaterial({
       color: 0xff0000,
       transparent: false
     });
 
     const particle = new THREE.Mesh(geometry, material);
-    // Start from the cube position with slight random offset
+    // Start from the cube position with increased random offset for wider stream
     particle.position.set(
-      (Math.random() - 0.5) * 0.5,
-      (Math.random() - 0.5) * 0.5,
+      (Math.random() - 0.5) * 1.0,
+      (Math.random() - 0.5) * 1.0,
       0.5
     );
 
-    // Add random velocity for forward movement with spread
+    // Add random velocity for forward movement with increased spread
     particle.userData = {
       velocity: {
-        x: (Math.random() - 0.5) * 0.2,
-        y: (Math.random() - 0.5) * 0.2,
+        x: (Math.random() - 0.5) * 0.4,
+        y: (Math.random() - 0.5) * 0.4,
         z: 0.5 + Math.random() * 0.3
       },
       isMark: false,
