@@ -248,18 +248,6 @@ export default function DoubleSlitExperiment() {
         particle.userData.markTime = time;
       }
 
-      if (particle.userData.isMark) {
-        if (time - particle.userData.markTime > 3) {
-          if (sceneRef.current) {
-            sceneRef.current.remove(particle);
-          }
-          particle.geometry.dispose();
-          if (particle.material instanceof THREE.Material) {
-            particle.material.dispose();
-          }
-          return false;
-        }
-      }
 
       if (particle.position.z > 35 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
         if (sceneRef.current) {
