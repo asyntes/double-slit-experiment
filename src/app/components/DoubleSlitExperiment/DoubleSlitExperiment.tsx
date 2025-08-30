@@ -29,8 +29,7 @@ export default function DoubleSlitExperiment() {
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(-3, 2, -8);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(-19.165995152477358, 9.637643699188821, 5.055107657476825);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -54,10 +53,32 @@ export default function DoubleSlitExperiment() {
     createLabels(scene);
 
     const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(1.6695085561159786, -3.0874538457220844, 16.502079563322997);
     controls.enablePan = true;
     controls.enableZoom = true;
     controls.enableRotate = true;
+    controls.minDistance = 1;
+    controls.maxDistance = 60;
     controlsRef.current = controls;
+
+    // Adjust camera distance and position based on orientation
+    const isPortrait = window.innerHeight > window.innerWidth;
+    if (isPortrait) {
+      // Calculate direction from target to camera and normalize
+      const direction = camera.position.clone().sub(controls.target).normalize();
+      // Set camera at max distance (60) from target
+      camera.position.copy(controls.target).add(direction.multiplyScalar(60));
+      // Move camera down to show scene higher on screen
+      camera.position.y -= 8;
+      // Update controls to reflect the new camera position
+      controls.update();
+    }
+
+    // Log camera position and target when it changes
+    controls.addEventListener('change', () => {
+      console.log('Camera position:', camera.position);
+      console.log('Camera target:', controls.target);
+    });
 
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
@@ -88,7 +109,7 @@ export default function DoubleSlitExperiment() {
       if (mountRef.current && rendererRef.current?.domElement) {
         mountRef.current.removeChild(rendererRef.current.domElement);
       }
-      
+
       // Cleanup labels
       labelsRef.current.forEach(labelGroup => {
         if (sceneRef.current) {
@@ -102,7 +123,7 @@ export default function DoubleSlitExperiment() {
         });
       });
       labelsRef.current = [];
-      
+
       rendererRef.current?.dispose();
     };
   }, []);
@@ -201,42 +222,42 @@ export default function DoubleSlitExperiment() {
 
   const createTextLabel = (text: string): THREE.Group => {
     const labelGroup = new THREE.Group();
-    
+
     // Create a simple text using canvas texture as fallback
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d')!;
     canvas.width = 512;
     canvas.height = 128;
-    
+
     context.fillStyle = 'rgba(0, 0, 0, 0)';
     context.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     context.fillStyle = 'white';
     context.font = 'bold 36px Arial';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    
+
     const lines = text.split('\n');
     const lineHeight = 45;
     const startY = canvas.height / 2 - (lines.length - 1) * lineHeight / 2;
-    
+
     lines.forEach((line, index) => {
       context.fillText(line, canvas.width / 2, startY + index * lineHeight);
     });
-    
+
     const texture = new THREE.CanvasTexture(canvas);
     texture.needsUpdate = true;
-    
-    const spriteMaterial = new THREE.SpriteMaterial({ 
+
+    const spriteMaterial = new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
       opacity: 0.9
     });
-    
+
     const sprite = new THREE.Sprite(spriteMaterial);
     sprite.scale.set(6, 1.5, 1);
     labelGroup.add(sprite);
-    
+
     return labelGroup;
   };
 
