@@ -11,9 +11,9 @@ function PhaseButton({ label, active, disabled = false, onClick }: PhaseButtonPr
   const baseClasses = "px-4 py-2 rounded-md font-semibold text-sm transition-all duration-300 uppercase";
   const activeClasses = "bg-white/90 text-black hover:bg-white";
   const inactiveClasses = "bg-black/60 border border-white/30 text-white cursor-not-allowed opacity-50";
-  
+
   return (
-    <button 
+    <button
       className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
       disabled={disabled}
       onClick={onClick}
@@ -35,8 +35,7 @@ export default function PhaseSelector() {
 
       <div className="phase-explanation mt-3 p-3 bg-black/60 rounded-md border border-white/10">
         <p className="text-white text-sm leading-relaxed">
-          Protons are fired towards two slits. Each proton travels through one slit or the other, creating random impact points on the detection screen. However, due to their de Broglie wavelength (λ = h / p), which is shorter for protons due to their higher mass, interference patterns are less pronounced unless their momentum is very low.
-        </p>
+          Protons pass through two slits, creating random impact points on the screen. Due to their shorter de Broglie wavelength (λ = h / p) from higher mass, interference is absent in this scenario.        </p>
       </div>
     </div>
   );

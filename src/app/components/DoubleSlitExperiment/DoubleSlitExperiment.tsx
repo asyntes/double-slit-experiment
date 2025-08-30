@@ -234,7 +234,7 @@ export default function DoubleSlitExperiment() {
     });
     
     const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(8, 2, 1);
+    sprite.scale.set(6, 1.5, 1);
     labelGroup.add(sprite);
     
     return labelGroup;
