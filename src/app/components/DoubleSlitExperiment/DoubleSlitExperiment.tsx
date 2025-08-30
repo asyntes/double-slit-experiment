@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './DoubleSlitExperiment.css';
@@ -9,12 +9,14 @@ import TopBar from './components/TopBar/TopBar';
 
 
 export default function DoubleSlitExperiment() {
+  const [activePhase, setActivePhase] = useState('proton');
+  const activePhaseRef = useRef('proton'); // Ref per accesso immediato nel loop
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const animationIdRef = useRef<number | null>(null);
-  const particlesRef = useRef<THREE.Mesh[]>([]);
+  const protonsRef = useRef<THREE.Mesh[]>([]);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const diffractionPanelRef = useRef<THREE.Group | null>(null);
@@ -51,6 +53,8 @@ export default function DoubleSlitExperiment() {
 
     createExperimentSetup(scene);
     createLabels(scene);
+    
+    console.log('Initial setup complete, activePhase:', activePhase);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(1.6695085561159786, -3.0874538457220844, 16.502079563322997);
@@ -67,42 +71,36 @@ export default function DoubleSlitExperiment() {
       // Check for low-height portrait devices (like iPhone SE)
       const isLowHeightDevice = window.innerHeight <= 667; // iPhone SE height threshold
       const sceneOffset = isLowHeightDevice ? 12 : 5; // Move scene up more for low-height devices
-      
+
       // Move the entire scene upward
       scene.position.y += sceneOffset;
-      
+
       // Set camera to max distance (60) for portrait mode
       const direction = camera.position.clone().sub(controls.target).normalize();
       camera.position.copy(controls.target).add(direction.multiplyScalar(60));
       controls.update();
     }
 
-    // Log camera position and target when it changes
-    controls.addEventListener('change', () => {
-      console.log('Camera position:', camera.position);
-      console.log('Camera target:', controls.target);
-    });
-
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current || !sceneRef.current) return;
-      
+
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(window.innerWidth, window.innerHeight);
-      
+
       // Reset scene position first
       sceneRef.current.position.y = 0;
-      
+
       // Reapply scene positioning and camera distance for portrait mode
       const isPortrait = window.innerHeight > window.innerWidth;
       if (isPortrait) {
         // Check for low-height portrait devices (like iPhone SE)
         const isLowHeightDevice = window.innerHeight <= 667; // iPhone SE height threshold
         const sceneOffset = isLowHeightDevice ? 12 : 5; // Move scene up more for low-height devices
-        
+
         // Move the entire scene upward
         sceneRef.current.position.y += sceneOffset;
-        
+
         // Set camera to max distance (60) for portrait mode
         if (controlsRef.current) {
           const direction = cameraRef.current.position.clone().sub(controlsRef.current.target).normalize();
@@ -153,9 +151,7 @@ export default function DoubleSlitExperiment() {
     };
   }, []);
 
-  useEffect(() => {
-    updatePhaseVisualization();
-  }, []);
+  // Rimuovo updatePhaseVisualization dall'useEffect iniziale per testare
 
   const createExperimentSetup = (scene: THREE.Scene) => {
     const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -287,21 +283,22 @@ export default function DoubleSlitExperiment() {
   };
 
 
-  const createSingleParticle = (scene: THREE.Scene) => {
+  const createSingleProton = (scene: THREE.Scene) => {
+    console.log('Creating single proton in phase:', activePhase);
     const geometry = new THREE.SphereGeometry(0.05, 8, 6);
     const material = new THREE.MeshBasicMaterial({
       color: 0xff0000,
       transparent: false
     });
 
-    const particle = new THREE.Mesh(geometry, material);
-    particle.position.set(
+    const proton = new THREE.Mesh(geometry, material);
+    proton.position.set(
       (Math.random() - 0.5) * 1.0,
       (Math.random() - 0.5) * 1.0,
       0.5
     );
 
-    particle.userData = {
+    proton.userData = {
       velocity: {
         x: (Math.random() - 0.5) * 0.4,
         y: (Math.random() - 0.5) * 0.4,
@@ -311,79 +308,179 @@ export default function DoubleSlitExperiment() {
       markTime: 0
     };
 
-    scene.add(particle);
-    particlesRef.current.push(particle);
+    scene.add(proton);
+    protonsRef.current.push(proton);
   };
 
-  const createParticles = (scene: THREE.Scene) => {
-    particlesRef.current = [];
+  const createProtons = (scene: THREE.Scene) => {
+    protonsRef.current = [];
     for (let i = 0; i < 50; i++) {
-      createSingleParticle(scene);
+      createSingleProton(scene);
     }
-    console.log('Created initial batch of 50 particles');
+    console.log('Created initial batch of 50 protons');
   };
 
-  const removeParticleFromScene = (particle: THREE.Mesh) => {
+  const createProtonsForPhase = (scene: THREE.Scene, phase: string) => {
+    if (phase === 'proton') {
+      console.log('Creating protons for proton phase');
+      protonsRef.current = [];
+      for (let i = 0; i < 50; i++) {
+        createSingleProtonForPhase(scene, phase);
+      }
+      console.log('Created initial batch of 50 protons');
+    }
+    // Non crea nulla per lightwave
+  };
+
+  const createSingleProtonForPhase = (scene: THREE.Scene, phase: string) => {
+    console.log('Creating single proton for phase:', phase);
+    const geometry = new THREE.SphereGeometry(0.05, 8, 6);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      transparent: false
+    });
+
+    const proton = new THREE.Mesh(geometry, material);
+    proton.position.set(
+      (Math.random() - 0.5) * 1.0,
+      (Math.random() - 0.5) * 1.0,
+      0.5
+    );
+
+    proton.userData = {
+      velocity: {
+        x: (Math.random() - 0.5) * 0.4,
+        y: (Math.random() - 0.5) * 0.4,
+        z: 0.5 + Math.random() * 0.3
+      },
+      isMark: false,
+      markTime: 0
+    };
+
+    scene.add(proton);
+    protonsRef.current.push(proton);
+  };
+
+
+  const removeProtonFromScene = (proton: THREE.Mesh) => {
     if (!sceneRef.current) return;
 
-    sceneRef.current.remove(particle);
+    sceneRef.current.remove(proton);
 
-    if (particle instanceof THREE.Mesh) {
-      particle.geometry.dispose();
-      if (particle.material instanceof THREE.Material) {
-        particle.material.dispose();
+    if (proton instanceof THREE.Mesh) {
+      proton.geometry.dispose();
+      if (proton.material instanceof THREE.Material) {
+        proton.material.dispose();
       }
     }
   };
 
 
+
+  const handlePhaseChange = (phase: string) => {
+    console.log('Phase changing to:', phase);
+    setActivePhase(phase);
+    activePhaseRef.current = phase; // Aggiorna immediatamente il ref
+
+    if (phase === 'lightwave') {
+      // Ferma tutto e pulisci lo schermo - non spara niente
+      console.log('Switching to lightwave: clearing all protons');
+      clearAllProtons();
+      clearDetectionScreen();
+    } else if (phase === 'proton') {
+      // Ripulisci tutto e riparti da capo
+      console.log('Switching to proton: clearing and restarting');
+      clearAllProtons();
+      clearDetectionScreen();
+      // Crea i protoni iniziali solo per proton
+      if (sceneRef.current) {
+        createProtonsForPhase(sceneRef.current, phase);
+      }
+    }
+  };
+
+  const clearDetectionScreen = () => {
+    if (!sceneRef.current) return;
+
+    // Rimuovi tutti i protoni che sono diventati segni bianchi sullo schermo
+    protonsRef.current = protonsRef.current.filter(proton => {
+      if (proton.userData.isMark) {
+        sceneRef.current!.remove(proton);
+        proton.geometry.dispose();
+        if (proton.material instanceof THREE.Material) {
+          proton.material.dispose();
+        }
+        return false;
+      }
+      return true;
+    });
+  };
+
+  const clearAllProtons = () => {
+    if (!sceneRef.current) return;
+
+    protonsRef.current.forEach(proton => {
+      sceneRef.current!.remove(proton);
+      proton.geometry.dispose();
+      if (proton.material instanceof THREE.Material) {
+        proton.material.dispose();
+      }
+    });
+    protonsRef.current = [];
+  };
 
   const updateExperiment = () => {
     if (!sceneRef.current) return;
 
     const time = Date.now() * 0.001;
 
-    if (particlesRef.current.length < 120) {
-      const particlesToAdd = Math.min(5, 120 - particlesRef.current.length);
-      for (let i = 0; i < particlesToAdd; i++) {
+    // Crea nuovi protoni solo nella fase proton - USA IL REF!
+    const currentPhase = activePhaseRef.current;
+    if (currentPhase === 'proton' && protonsRef.current.length < 120) {
+      const protonsToAdd = Math.min(5, 120 - protonsRef.current.length);
+      for (let i = 0; i < protonsToAdd; i++) {
         if (sceneRef.current) {
-          createSingleParticle(sceneRef.current);
+          createSingleProtonForPhase(sceneRef.current, currentPhase);
         }
       }
     }
+    // In fase lightwave non si crea niente - DEBUG
+    if (currentPhase === 'lightwave') {
+      console.log('Light wave mode: not creating protons, current count:', protonsRef.current.length);
+    }
 
-    particlesRef.current = particlesRef.current.filter(particle => {
-      particle.position.x += particle.userData.velocity.x;
-      particle.position.y += particle.userData.velocity.y;
-      particle.position.z += particle.userData.velocity.z;
+    protonsRef.current = protonsRef.current.filter(proton => {
+      proton.position.x += proton.userData.velocity.x;
+      proton.position.y += proton.userData.velocity.y;
+      proton.position.z += proton.userData.velocity.z;
 
-      if (particle.position.z >= 15 && !((particle.position.x >= -1.5 && particle.position.x <= -0.5 && particle.position.y >= -2 && particle.position.y <= 2) || (particle.position.x >= 0.5 && particle.position.x <= 1.5 && particle.position.y >= -2 && particle.position.y <= 2))) {
-        removeParticleFromScene(particle);
+      if (proton.position.z >= 15 && !((proton.position.x >= -1.5 && proton.position.x <= -0.5 && proton.position.y >= -2 && proton.position.y <= 2) || (proton.position.x >= 0.5 && proton.position.x <= 1.5 && proton.position.y >= -2 && proton.position.y <= 2))) {
+        removeProtonFromScene(proton);
         return false;
       }
 
-      if (detectionScreenRef.current && !particle.userData.isMark && particle.position.z >= 30 &&
-        Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
-        particle.position.z = 30;
-        if (particle.material instanceof THREE.MeshBasicMaterial) {
-          particle.material.color.setHex(0xffffff);
+      if (detectionScreenRef.current && !proton.userData.isMark && proton.position.z >= 30 &&
+        Math.abs(proton.position.x) <= 10 && Math.abs(proton.position.y) <= 7.5) {
+        proton.position.z = 30;
+        if (proton.material instanceof THREE.MeshBasicMaterial) {
+          proton.material.color.setHex(0xffffff);
         }
-        particle.userData.velocity.x = 0;
-        particle.userData.velocity.y = 0;
-        particle.userData.velocity.z = 0;
-        particle.scale.setScalar(1.2);
-        particle.userData.isMark = true;
-        particle.userData.markTime = time;
+        proton.userData.velocity.x = 0;
+        proton.userData.velocity.y = 0;
+        proton.userData.velocity.z = 0;
+        proton.scale.setScalar(1.2);
+        proton.userData.isMark = true;
+        proton.userData.markTime = time;
       }
 
 
-      if (particle.position.z > 35 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
+      if (proton.position.z > 35 || Math.abs(proton.position.x) > 15 || Math.abs(proton.position.y) > 15) {
         if (sceneRef.current) {
-          sceneRef.current.remove(particle);
+          sceneRef.current.remove(proton);
         }
-        particle.geometry.dispose();
-        if (particle.material instanceof THREE.Material) {
-          particle.material.dispose();
+        proton.geometry.dispose();
+        if (proton.material instanceof THREE.Material) {
+          proton.material.dispose();
         }
         return false;
       }
@@ -398,18 +495,21 @@ export default function DoubleSlitExperiment() {
   const updatePhaseVisualization = () => {
     if (!sceneRef.current) return;
 
-    particlesRef.current.forEach(particle => {
-      sceneRef.current!.remove(particle);
-      if (particle instanceof THREE.Mesh) {
-        particle.geometry.dispose();
-        if (particle.material instanceof THREE.Material) {
-          particle.material.dispose();
+    protonsRef.current.forEach(proton => {
+      sceneRef.current!.remove(proton);
+      if (proton instanceof THREE.Mesh) {
+        proton.geometry.dispose();
+        if (proton.material instanceof THREE.Material) {
+          proton.material.dispose();
         }
       }
     });
-    particlesRef.current = [];
+    protonsRef.current = [];
 
-    createParticles(sceneRef.current);
+    // Crea protoni solo nella fase proton
+    if (activePhaseRef.current === 'proton') {
+      createProtons(sceneRef.current);
+    }
   };
 
 
@@ -420,7 +520,7 @@ export default function DoubleSlitExperiment() {
 
       <TopBar />
 
-      <PhaseSelector />
+      <PhaseSelector activePhase={activePhase} onPhaseChange={handlePhaseChange} />
 
     </div>
   );
