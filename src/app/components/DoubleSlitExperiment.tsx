@@ -2,32 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-type ExperimentPhase = 'particle' | 'wave' | 'quantum' | 'observer';
-
-interface PhaseConfig {
-  title: string;
-  description: string;
-}
-
-const PHASE_CONFIGS: Record<ExperimentPhase, PhaseConfig> = {
-  particle: {
-    title: 'Particella Classica',
-    description: 'Le particelle vengono inviate attraverso due fenditure. Passano attraverso una fenditura o l\'altra.'
-  },
-  wave: {
-    title: 'Onda',
-    description: 'Le onde passano attraverso entrambe le fenditure simultaneamente e interferiscono tra loro.'
-  },
-  quantum: {
-    title: 'Oggetto Quantistico',
-    description: 'Gli oggetti quantistici mostrano pattern di interferenza ondulatoria.'
-  },
-  observer: {
-    title: 'Aggiungi Osservatore',
-    description: 'Quando osservate, la funzione d\'onda collassa nel comportamento particellare.'
-  }
-};
+const EXPERIMENT_TITLE = 'Particella Classica';
+const EXPERIMENT_DESCRIPTION = 'Le particelle vengono inviate attraverso due fenditure. Passano attraverso una fenditura o l\'altra.';
 
 export default function DoubleSlitExperiment() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -36,11 +14,9 @@ export default function DoubleSlitExperiment() {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const animationIdRef = useRef<number | null>(null);
   const particlesRef = useRef<THREE.Mesh[]>([]);
-  const waveGroupRef = useRef<THREE.Group | null>(null);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
-  const hitPointsRef = useRef<THREE.Vector2[]>([]);
+  const controlsRef = useRef<OrbitControls | null>(null);
 
-  const [currentPhase, setCurrentPhase] = useState<ExperimentPhase>('particle');
   const [particleCount, setParticleCount] = useState(0);
 
   useEffect(() => {
@@ -51,10 +27,10 @@ export default function DoubleSlitExperiment() {
     scene.background = new THREE.Color(0x1a1a1a);
     sceneRef.current = scene;
 
-    // Camera setup - optimal view for continuous particle flow
+    // Camera setup - three-quarter view from behind and slightly above
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(-2, 2, 5);
-    camera.lookAt(1, 0, 0);
+    camera.position.set(-3, 2, -8);
+    camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
     // Renderer setup
@@ -79,6 +55,13 @@ export default function DoubleSlitExperiment() {
     // Create the experiment apparatus
     createExperimentSetup(scene);
 
+    // Add orbit controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    controls.enableRotate = true;
+    controlsRef.current = controls;
+
     // Handle window resize
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
@@ -92,6 +75,9 @@ export default function DoubleSlitExperiment() {
     // Start animation loop
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
+      if (controlsRef.current) {
+        controlsRef.current.update();
+      }
       updateExperiment();
       if (rendererRef.current && cameraRef.current) {
         rendererRef.current.render(scene, cameraRef.current);
@@ -113,153 +99,46 @@ export default function DoubleSlitExperiment() {
 
   useEffect(() => {
     updatePhaseVisualization();
-  }, [currentPhase]);
+  }, []);
 
   const createExperimentSetup = (scene: THREE.Scene) => {
-    // Create the barrier with double slits - make it more visible
-    const barrierGeometry = new THREE.BoxGeometry(0.3, 8, 0.2);
-    const barrierMaterial = new THREE.MeshPhongMaterial({
-      color: 0x888888,
-      transparent: true,
-      opacity: 0.9
+    // Create the white cube particle generator
+    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const cubeMaterial = new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+      emissive: 0x222222
     });
-
-    // Top part of barrier
-    const topBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
-    topBarrier.position.set(0, 3, 0);
-    topBarrier.scale.y = 0.5;
-    scene.add(topBarrier);
-
-    // Bottom part of barrier
-    const bottomBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
-    bottomBarrier.position.set(0, -3, 0);
-    bottomBarrier.scale.y = 0.5;
-    scene.add(bottomBarrier);
-
-    // Middle barriers (creating the slits) - make them more visible
-    const slitBarrier1 = new THREE.Mesh(barrierGeometry, barrierMaterial);
-    slitBarrier1.position.set(0, 0.75, 0);
-    slitBarrier1.scale.y = 0.25;
-    scene.add(slitBarrier1);
-
-    const slitBarrier2 = new THREE.Mesh(barrierGeometry, barrierMaterial);
-    slitBarrier2.position.set(0, -0.75, 0);
-    slitBarrier2.scale.y = 0.25;
-    scene.add(slitBarrier2);
-
-    // Create slit openings - make them clearly visible
-    const slitGeometry = new THREE.PlaneGeometry(0.4, 1.5);
-    const slitMaterial = new THREE.MeshBasicMaterial({
-      color: 0x001122,
-      transparent: true,
-      opacity: 0.3,
-      side: THREE.DoubleSide
-    });
-
-    const upperSlit = new THREE.Mesh(slitGeometry, slitMaterial);
-    upperSlit.position.set(0, 1.25, 0.1);
-    scene.add(upperSlit);
-
-    const lowerSlit = new THREE.Mesh(slitGeometry, slitMaterial);
-    lowerSlit.position.set(0, -1.25, 0.1);
-    scene.add(lowerSlit);
-
-    // Create the detection screen - make it more visible
-    const screenGeometry = new THREE.PlaneGeometry(0.2, 8);
-    const screenMaterial = new THREE.MeshPhongMaterial({
-      color: 0x222222,
-      transparent: true,
-      opacity: 0.8,
-      emissive: 0x001100
-    });
-    const screen = new THREE.Mesh(screenGeometry, screenMaterial);
-    screen.position.set(8, 0, 0);
-    scene.add(screen);
-
-    // Create particle source indicator - make it more prominent
-    const sourceGeometry = new THREE.SphereGeometry(0.3);
-    const sourceMaterial = new THREE.MeshPhongMaterial({
-      color: 0xff3333,
-      emissive: 0x330000
-    });
-    const source = new THREE.Mesh(sourceGeometry, sourceMaterial);
-    source.position.set(-8, 0, 0);
-    scene.add(source);
-
-    // Add visual guides and labels
-    createVisualGuides(scene);
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    cube.position.set(0, 0, 0);
+    scene.add(cube);
   };
 
-  const createVisualGuides = (scene: THREE.Scene) => {
-    // Arrow showing particle direction
-    const arrowGeometry = new THREE.ConeGeometry(0.15, 0.4);
-    const arrowMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
-    arrow.position.set(-6, 0, 0);
-    arrow.rotation.z = Math.PI / 2;
-    scene.add(arrow);
-
-    // Light beam effect
-    const beamGeometry = new THREE.CylinderGeometry(0.03, 0.03, 8);
-    const beamMaterial = new THREE.MeshBasicMaterial({
-      color: 0x4444ff,
-      transparent: true,
-      opacity: 0.3
-    });
-    const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-    beam.position.set(-4, 0, 0);
-    beam.rotation.z = Math.PI / 2;
-    scene.add(beam);
-
-    // Slit labels
-    const labelGeometry = new THREE.PlaneGeometry(0.8, 0.3);
-    const upperLabelMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.8
-    });
-    const lowerLabelMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.8
-    });
-
-    // Note: In a real implementation, you'd use TextGeometry or a texture with text
-    // For now, we'll use colored indicators
-    const upperIndicator = new THREE.Mesh(
-      new THREE.SphereGeometry(0.1),
-      new THREE.MeshBasicMaterial({ color: 0xff0000 })
-    );
-    upperIndicator.position.set(0, 1.8, 0.2);
-    scene.add(upperIndicator);
-
-    const lowerIndicator = new THREE.Mesh(
-      new THREE.SphereGeometry(0.1),
-      new THREE.MeshBasicMaterial({ color: 0x0000ff })
-    );
-    lowerIndicator.position.set(0, -1.8, 0.2);
-    scene.add(lowerIndicator);
-  };
 
   const createSingleParticle = (scene: THREE.Scene) => {
-    // Make particles BIGGER and more visible
-    const geometry = new THREE.SphereGeometry(0.4, 8, 6); // Increased from 0.2 to 0.4
+    // Create red particles
+    const geometry = new THREE.SphereGeometry(0.2, 8, 6);
     const material = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: 0xff0000,
       transparent: false
     });
 
     const particle = new THREE.Mesh(geometry, material);
-    particle.position.set(-12, (Math.random() - 0.5) * 8, 0);
+    // Start from the cube position with slight random offset
+    particle.position.set(
+      (Math.random() - 0.5) * 0.5,
+      (Math.random() - 0.5) * 0.5,
+      0.5
+    );
 
-    // Simple data - just slit assignment
+    // Add random velocity for forward movement with spread
     particle.userData = {
-      slitAssigned: Math.random() > 0.5 ? 'upper' : 'lower',
-      hasPassedSlit: false,
-      hasBeenDetected: false
+      velocity: {
+        x: (Math.random() - 0.5) * 0.2,
+        y: (Math.random() - 0.5) * 0.2,
+        z: 0.5 + Math.random() * 0.3
+      }
     };
 
-    console.log('Created BIG particle at:', particle.position.x, particle.position.y);
     scene.add(particle);
     particlesRef.current.push(particle);
   };
@@ -276,21 +155,6 @@ export default function DoubleSlitExperiment() {
   const removeParticleFromScene = (particle: THREE.Mesh) => {
     if (!sceneRef.current) return;
 
-    // Dispose trail particles properly
-    if (particle.userData.trailGroup) {
-      while (particle.userData.trailGroup.children.length > 0) {
-        const trailParticle = particle.userData.trailGroup.children[0];
-        particle.userData.trailGroup.remove(trailParticle);
-        if (trailParticle instanceof THREE.Mesh) {
-          trailParticle.geometry.dispose();
-          if (trailParticle.material instanceof THREE.Material) {
-            trailParticle.material.dispose();
-          }
-        }
-      }
-      sceneRef.current.remove(particle.userData.trailGroup);
-    }
-
     // Remove particle from scene
     sceneRef.current.remove(particle);
 
@@ -303,43 +167,6 @@ export default function DoubleSlitExperiment() {
     }
   };
 
-  const createWaves = (scene: THREE.Scene) => {
-    const waveGroup = new THREE.Group();
-
-    // Create clear striped interference pattern - simple horizontal lines
-    for (let i = 0; i < 30; i++) {
-      const y = (i - 15) * 0.2; // Evenly spaced horizontal lines
-
-      const points = [];
-      for (let x = -10; x <= 10; x += 0.1) {
-        let waveY = y;
-
-        if (x > 0) {
-          // After barrier - create clear interference stripes
-          const distance1 = Math.abs(x - 0);
-          const distance2 = Math.abs(x - 0);
-          const phase1 = distance1 * 2;
-          const phase2 = distance2 * 2;
-          waveY += (Math.sin(phase1) + Math.sin(phase2)) * 0.3;
-        }
-
-        points.push(new THREE.Vector3(x, waveY, 0));
-      }
-
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const material = new THREE.LineBasicMaterial({
-        color: 0x00ffff, // Bright cyan for waves
-        transparent: true,
-        opacity: 0.8
-      });
-
-      const line = new THREE.Line(geometry, material);
-      waveGroup.add(line);
-    }
-
-    scene.add(waveGroup);
-    waveGroupRef.current = waveGroup;
-  };
 
 
   const updateExperiment = () => {
@@ -347,9 +174,8 @@ export default function DoubleSlitExperiment() {
 
     const time = Date.now() * 0.001;
 
-    // Add new particles continuously for dense stream - only for particle-based modes
-    if ((currentPhase === 'particle' || currentPhase === 'quantum' || currentPhase === 'observer') &&
-      particlesRef.current.length < 80) { // Maintain around 80 particles for good visibility
+    // Add new particles continuously for dense stream
+    if (particlesRef.current.length < 80) { // Maintain around 80 particles for good visibility
       const particlesToAdd = Math.min(3, 80 - particlesRef.current.length);
       for (let i = 0; i < particlesToAdd; i++) {
         if (sceneRef.current) {
@@ -361,110 +187,17 @@ export default function DoubleSlitExperiment() {
       }
     }
 
-    // Update particles - handle different modes
+    // Update particles
     particlesRef.current = particlesRef.current.filter(particle => {
-      if (currentPhase === 'particle' || currentPhase === 'quantum' || currentPhase === 'observer') {
-        // Move particle to the right - increased speed for better visibility
-        particle.position.x += 0.8; // Increased from 0.6 to 0.8
+      // Move particle based on its velocity
+      particle.position.x += particle.userData.velocity.x;
+      particle.position.y += particle.userData.velocity.y;
+      particle.position.z += particle.userData.velocity.z;
 
-        // Handle quantum clouds
-        if (currentPhase === 'quantum' && particle.userData.quantumClouds) {
-          particle.userData.quantumClouds.forEach((cloud: THREE.Mesh, index: number) => {
-            // Make clouds fluctuate around the particle
-            const time = Date.now() * 0.001;
-            const baseX = particle.position.x;
-            const baseY = particle.position.y;
-
-            cloud.position.x = baseX + Math.sin(time * 2 + index) * 0.3;
-            cloud.position.y = baseY + Math.cos(time * 1.5 + index) * 0.3;
-            cloud.position.z = Math.sin(time * 3 + index) * 0.2;
-
-            // Pulse effect
-            const scale = 0.8 + Math.sin(time * 4 + index) * 0.4;
-            cloud.scale.setScalar(scale);
-          });
-        }
-
-        // At barrier (x = 0), deflect based on assigned slit
-        if (particle.position.x >= -0.1 && particle.position.x <= 0.1 && !particle.userData.hasPassedSlit) {
-          particle.userData.hasPassedSlit = true;
-
-          if (particle.userData.slitAssigned === 'upper') {
-            particle.position.y = 1.5; // Go to upper slit
-            if (particle.material instanceof THREE.MeshBasicMaterial) {
-              if (currentPhase === 'observer') {
-                particle.material.color.setHex(0xff0000); // Red for observer mode
-              } else if (currentPhase === 'quantum') {
-                particle.material.color.setHex(0xff00ff); // Magenta for quantum
-              } else {
-                particle.material.color.setHex(0xff0000); // Red for particle
-              }
-            }
-          } else {
-            particle.position.y = -1.5; // Go to lower slit
-            if (particle.material instanceof THREE.MeshBasicMaterial) {
-              if (currentPhase === 'observer') {
-                particle.material.color.setHex(0x0000ff); // Blue for observer mode
-              } else if (currentPhase === 'quantum') {
-                particle.material.color.setHex(0xff00ff); // Magenta for quantum
-              } else {
-                particle.material.color.setHex(0x0000ff); // Blue for particle
-              }
-            }
-          }
-        }
-
-        // Continue moving after slit
-        if (particle.userData.hasPassedSlit) {
-          particle.position.x += 0.8; // Match the main speed
-        }
-
-        // Check if particle hits detection screen (at x = 6 for better visibility)
-        if (particle.position.x >= 5.9 && particle.position.x <= 6.1 && !particle.userData.hasBeenDetected) {
-          particle.userData.hasBeenDetected = true;
-          setParticleCount(prev => {
-            console.log('Particle detected! New count:', prev + 1);
-            return prev + 1;
-          });
-
-          // Visual hit effect - make it more visible
-          const hitEffect = new THREE.Mesh(
-            new THREE.SphereGeometry(0.15),
-            new THREE.MeshBasicMaterial({
-              color: 0xffff00,
-              transparent: true,
-              opacity: 1.0
-            })
-          );
-          hitEffect.position.copy(particle.position);
-          if (sceneRef.current) {
-            sceneRef.current.add(hitEffect);
-            setTimeout(() => {
-              if (sceneRef.current) {
-                sceneRef.current.remove(hitEffect);
-              }
-              hitEffect.geometry.dispose();
-              hitEffect.material.dispose();
-            }, 500);
-          }
-        }
-      }
-
-      // Remove if off screen
-      if (particle.position.x > 10 || Math.abs(particle.position.y) > 8) {
+      // Remove if off screen (far from camera)
+      if (particle.position.z > 20 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
         if (sceneRef.current) {
           sceneRef.current.remove(particle);
-
-          // Remove quantum clouds too
-          if (particle.userData.quantumClouds) {
-            particle.userData.quantumClouds.forEach((cloud: THREE.Mesh) => {
-              sceneRef.current!.remove(cloud);
-              cloud.geometry.dispose();
-              if (cloud.material instanceof THREE.Material) {
-                cloud.material.dispose();
-              }
-            });
-          }
         }
         particle.geometry.dispose();
         if (particle.material instanceof THREE.Material) {
@@ -476,140 +209,8 @@ export default function DoubleSlitExperiment() {
       return true;
     });
 
-    // Update waves
-    if (waveGroupRef.current) {
-      waveGroupRef.current.children.forEach((child, index) => {
-        if (child instanceof THREE.Line) {
-          const positions = child.geometry.attributes.position;
-          const baseY = (index - 20) * 0.08;
 
-          for (let i = 0; i < positions.count; i++) {
-            const x = positions.array[i * 3];
-            let y = baseY;
 
-            if (x < 0) {
-              // Before barrier - propagating wave
-              y += Math.sin(x * 0.15 + time * 2 + index * 0.05) * 0.4 * Math.exp(x * 0.05);
-            } else {
-              // After barrier - interference pattern
-              const d1 = Math.sqrt((x - 0) ** 2 + (baseY - 1.25) ** 2);
-              const d2 = Math.sqrt((x - 0) ** 2 + (baseY - (-1.25)) ** 2);
-              const phase1 = d1 * 0.8 - time * 2.5;
-              const phase2 = d2 * 0.8 - time * 2.5;
-              y += (Math.sin(phase1) + Math.sin(phase2)) * 0.35 * Math.exp(-x * 0.08);
-            }
-
-            positions.array[i * 3 + 1] = y;
-            // Add some z-movement for 3D effect
-            positions.array[i * 3 + 2] = Math.sin(x * 0.1 + time + index * 0.1) * 0.05;
-          }
-          positions.needsUpdate = true;
-
-          // Update line material for dynamic effect
-          if (child.material instanceof THREE.LineBasicMaterial) {
-            child.material.opacity = 0.3 + Math.sin(time * 2 + index * 0.1) * 0.2;
-          }
-        } else if (child instanceof THREE.Mesh && child.userData.phase !== undefined) {
-          // Update wave particles
-          const phase = child.userData.phase;
-          const amplitude = child.userData.amplitude;
-          const baseX = child.position.x;
-          const baseY = child.position.y;
-
-          child.position.x = baseX + Math.sin(time * 3 + phase) * 0.1;
-          child.position.y = baseY + Math.cos(time * 2 + phase) * amplitude * 0.5;
-          child.position.z = Math.sin(time * 4 + phase) * 0.2;
-
-          // Pulse effect
-          const scale = 0.8 + Math.sin(time * 5 + phase) * 0.3;
-          child.scale.setScalar(scale);
-
-          if (child.material instanceof THREE.MeshBasicMaterial) {
-            child.material.opacity = 0.4 + Math.sin(time * 3 + phase) * 0.3;
-          }
-        }
-
-        return true; // Keep particle in array
-      });
-    }
-
-    // Update quantum superposition effects
-    if (currentPhase === 'quantum' && waveGroupRef.current) {
-      const quantumGroup = (waveGroupRef.current as THREE.Group).userData?.quantumGroup;
-      if (quantumGroup) {
-        quantumGroup.children.forEach((child: THREE.Object3D, index: number) => {
-          if (child instanceof THREE.Mesh && child.userData.phase !== undefined) {
-            // Animate probability clouds
-            const phase = child.userData.phase;
-            const amplitude = child.userData.amplitude;
-
-            child.position.y += Math.sin(time * 2 + phase) * 0.01;
-            child.position.z += Math.cos(time * 1.5 + phase) * 0.008;
-
-            const scale = 0.8 + Math.sin(time * 3 + phase) * 0.4;
-            child.scale.setScalar(scale * amplitude);
-
-            if (child.material instanceof THREE.MeshBasicMaterial) {
-              child.material.opacity = 0.15 + Math.sin(time * 4 + phase) * 0.2;
-            }
-          } else if (child instanceof THREE.Line) {
-            // Animate quantum field lines
-            const positions = child.geometry.attributes.position;
-            for (let i = 0; i < positions.count; i++) {
-              const x = positions.array[i * 3];
-              const baseY = positions.array[i * 3 + 1];
-              const baseZ = positions.array[i * 3 + 2];
-
-              positions.array[i * 3 + 1] = baseY + Math.sin(x * 0.2 + time * 2 + index * 0.1) * 0.1;
-              positions.array[i * 3 + 2] = baseZ + Math.cos(x * 0.15 + time * 1.8 + index * 0.15) * 0.08;
-            }
-            positions.needsUpdate = true;
-          }
-        });
-      }
-    }
-
-    // Update observer effect - dramatic pattern change
-    if (currentPhase === 'observer') {
-      // Find observer in scene
-      sceneRef.current.children.forEach(child => {
-        if (child instanceof THREE.Mesh &&
-          child.geometry instanceof THREE.BoxGeometry &&
-          child.userData.lastToggle !== undefined) {
-
-          const now = Date.now();
-          const timeSinceToggle = now - child.userData.lastToggle;
-
-          // Toggle observer visibility every 2 seconds
-          if (timeSinceToggle > 2000) {
-            child.userData.isVisible = !child.userData.isVisible;
-            child.userData.lastToggle = now;
-
-            if (child.material instanceof THREE.MeshBasicMaterial) {
-              child.material.opacity = child.userData.isVisible ? 1.0 : 0.1;
-            }
-
-            // When observer disappears, particles behave randomly (quantum-like)
-            // When observer appears, particles follow assigned slits (classical)
-            if (!child.userData.isVisible) {
-              // Observer gone - random behavior
-              particlesRef.current.forEach(particle => {
-                if (particle.userData.observerMode) {
-                  // Random deflection for quantum-like behavior
-                  particle.userData.slitAssigned = Math.random() > 0.5 ? 'upper' : 'lower';
-                  if (particle.material instanceof THREE.MeshBasicMaterial) {
-                    particle.material.color.setHex(0x888888); // Gray for unobserved
-                  }
-                }
-              });
-            }
-          }
-
-          // Rotate observer for visual effect
-          child.rotation.y += 0.02;
-        }
-      });
-    }
   };
 
   const updatePhaseVisualization = () => {
@@ -617,20 +218,6 @@ export default function DoubleSlitExperiment() {
 
     // Clear previous visualizations
     particlesRef.current.forEach(particle => {
-      // Clean up trail groups with proper disposal
-      if (particle.userData.trailGroup) {
-        while (particle.userData.trailGroup.children.length > 0) {
-          const trailParticle = particle.userData.trailGroup.children[0];
-          particle.userData.trailGroup.remove(trailParticle);
-          if (trailParticle instanceof THREE.Mesh) {
-            trailParticle.geometry.dispose();
-            if (trailParticle.material instanceof THREE.Material) {
-              trailParticle.material.dispose();
-            }
-          }
-        }
-        sceneRef.current!.remove(particle.userData.trailGroup);
-      }
       sceneRef.current!.remove(particle);
       // Dispose particle geometry and material
       if (particle instanceof THREE.Mesh) {
@@ -642,117 +229,14 @@ export default function DoubleSlitExperiment() {
     });
     particlesRef.current = [];
 
-    if (waveGroupRef.current) {
-      // Clean up quantum group if it exists
-      const quantumGroup = (waveGroupRef.current as THREE.Group).userData?.quantumGroup;
-      if (quantumGroup) {
-        sceneRef.current.remove(quantumGroup);
-      }
-      sceneRef.current.remove(waveGroupRef.current);
-      waveGroupRef.current = null;
-    }
-
-    // Create visualization based on current phase
-    switch (currentPhase) {
-      case 'particle':
-        createParticles(sceneRef.current);
-        break;
-      case 'wave':
-        createWaves(sceneRef.current);
-        break;
-      case 'quantum':
-        // Create quantum particles with visible probability clouds
-        for (let i = 0; i < 15; i++) {
-          // Main particle
-          const particleGeometry = new THREE.SphereGeometry(0.15, 8, 6);
-          const particleMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff00ff, // Bright magenta for quantum
-            transparent: true,
-            opacity: 0.9
-          });
-
-          const particle = new THREE.Mesh(particleGeometry, particleMaterial);
-          particle.position.set(-12, (Math.random() - 0.5) * 8, 0);
-          particle.userData = {
-            slitAssigned: Math.random() > 0.5 ? 'upper' : 'lower',
-            hasPassedSlit: false,
-            hasBeenDetected: false,
-            quantumClouds: []
-          };
-
-          // Add probability clouds around the particle
-          for (let j = 0; j < 5; j++) {
-            const cloudGeometry = new THREE.SphereGeometry(0.08, 6, 4);
-            const cloudMaterial = new THREE.MeshBasicMaterial({
-              color: 0x880088, // Darker magenta for clouds
-              transparent: true,
-              opacity: 0.4
-            });
-
-            const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
-            cloud.position.set(
-              particle.position.x + (Math.random() - 0.5) * 0.5,
-              particle.position.y + (Math.random() - 0.5) * 0.5,
-              (Math.random() - 0.5) * 0.3
-            );
-
-            particle.userData.quantumClouds.push(cloud);
-            sceneRef.current.add(cloud);
-          }
-
-          sceneRef.current.add(particle);
-          particlesRef.current.push(particle);
-        }
-        break;
-      case 'observer':
-        // Create observer that dramatically changes the pattern
-        const observerGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
-        const observerMaterial = new THREE.MeshBasicMaterial({
-          color: 0xff0000, // Bright red for observer
-          transparent: true,
-          opacity: 1.0
-        });
-        const observer = new THREE.Mesh(observerGeometry, observerMaterial);
-        observer.position.set(1, 0, 1);
-        observer.userData = {
-          isVisible: true,
-          lastToggle: Date.now()
-        };
-        sceneRef.current.add(observer);
-
-        // Create particles that change behavior based on observer
-        for (let i = 0; i < 20; i++) {
-          const particleGeometry = new THREE.SphereGeometry(0.2, 8, 6);
-          const particleMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: false
-          });
-
-          const particle = new THREE.Mesh(particleGeometry, particleMaterial);
-          particle.position.set(-12, (Math.random() - 0.5) * 8, 0);
-          particle.userData = {
-            slitAssigned: Math.random() > 0.5 ? 'upper' : 'lower',
-            hasPassedSlit: false,
-            hasBeenDetected: false,
-            observerMode: true
-          };
-
-          sceneRef.current.add(particle);
-          particlesRef.current.push(particle);
-        }
-        break;
-    }
+    // Create particle visualization
+    createParticles(sceneRef.current);
   };
 
   const resetCounter = () => {
     setParticleCount(0);
-    hitPointsRef.current.length = 0;
   };
 
-  // Reset counter when phase changes
-  useEffect(() => {
-    resetCounter();
-  }, [currentPhase]);
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
@@ -766,10 +250,10 @@ export default function DoubleSlitExperiment() {
             ESPERIMENTO DELLA DOPPIA FENDITURA
           </h1>
           <h2 className="text-lg md:text-xl font-semibold text-white text-center mb-1" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-            {PHASE_CONFIGS[currentPhase].title}
+            {EXPERIMENT_TITLE}
           </h2>
           <p className="text-sm md:text-base text-gray-400 text-center max-w-2xl mx-auto" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-            {PHASE_CONFIGS[currentPhase].description}
+            {EXPERIMENT_DESCRIPTION}
           </p>
           <div className="text-center mt-2">
             <span className="text-lg font-semibold text-white" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
@@ -783,23 +267,13 @@ export default function DoubleSlitExperiment() {
       <div className="absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-white/20">
         <div className="max-w-6xl mx-auto p-4">
           {/* Phase Selection Buttons */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            {(Object.keys(PHASE_CONFIGS) as ExperimentPhase[]).map((phase) => (
-              <button
-                key={phase}
-                onClick={() => setCurrentPhase(phase)}
-                className={`px-4 py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-300 transform hover:scale-105 ${currentPhase === phase
-                  ? 'bg-white text-black shadow-lg'
-                  : 'bg-black border border-white/30 text-white hover:bg-white/10'
-                  }`}
-                style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}
-              >
-                {phase === 'particle' ? 'PARTICELLA' :
-                  phase === 'wave' ? 'ONDA' :
-                    phase === 'quantum' ? 'QUANTISTICO' :
-                      'OSSERVATORE'}
-              </button>
-            ))}
+          <div className="flex justify-center mb-4">
+            <button
+              className="px-6 py-3 bg-white text-black rounded-lg font-semibold text-sm md:text-base shadow-lg"
+              style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}
+            >
+              PARTICELLA
+            </button>
           </div>
 
           {/* Reset Counter Button */}
@@ -823,22 +297,20 @@ export default function DoubleSlitExperiment() {
             <div className="font-semibold text-white mb-1">PARTICELLA CLASSICA:</div>
             <div className="text-gray-300 text-xs">Ogni particella passa attraverso UNA sola fenditura</div>
           </div>
-          <div>
-            <div className="font-semibold text-white mb-1">ONDA:</div>
-            <div className="text-gray-300 text-xs">Le onde si diffrangono attraverso ENTRAMBE le fenditure creando interferenza</div>
+          <div className="mt-3">
+            <div className="text-gray-400 text-xs">
+              <strong>Particelle rosse:</strong> Passano attraverso la fenditura superiore
+            </div>
           </div>
-          <div>
-            <div className="font-semibold text-white mb-1">QUANTISTICO:</div>
-            <div className="text-gray-300 text-xs">Le particelle mostrano comportamento ondulatorio duale</div>
-          </div>
-          <div>
-            <div className="font-semibold text-white mb-1">OSSERVATORE:</div>
-            <div className="text-gray-300 text-xs">L'osservazione fa collassare la funzione d'onda</div>
+          <div className="mt-2">
+            <div className="text-gray-400 text-xs">
+              <strong>Particelle blu:</strong> Passano attraverso la fenditura inferiore
+            </div>
           </div>
         </div>
         <div className="mt-4 pt-3 border-t border-white/20">
           <div className="text-xs text-gray-400 text-center" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-            <strong>Consiglio:</strong> Osserva come cambia il pattern di interferenza
+            <strong>Consiglio:</strong> Osserva il flusso continuo di particelle
           </div>
         </div>
       </div>
