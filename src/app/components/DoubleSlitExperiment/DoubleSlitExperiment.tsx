@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './DoubleSlitExperiment.css';
 import PhaseSelector from './components/PhaseSelector/PhaseSelector';
 import TopBar from './components/TopBar/TopBar';
 import { useThreeScene } from './hooks/useThreeScene';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useExperimentAnimation } from './hooks/useExperimentAnimation';
-import { ParticleSystem } from './components/ParticleSystem';
+import { updateGeneratorLabel } from './components/SceneLabels';
 
 
 export default function DoubleSlitExperiment() {
@@ -21,6 +21,7 @@ export default function DoubleSlitExperiment() {
     controlsRef,
     detectionScreenRef,
     diffractionPanelRef,
+    lightConeRef,
     labelsRef,
     particleSystemRef,
     sceneReady
@@ -32,6 +33,20 @@ export default function DoubleSlitExperiment() {
       console.log('Scene ready, particle system available:', !!particleSystemRef.current);
     }
   }, [sceneReady]);
+
+  // Handle light cone visibility and generator label based on active phase
+  useEffect(() => {
+    if (lightConeRef.current && sceneRef.current) {
+      const showCone = activePhase === 'lightwave';
+      lightConeRef.current.visible = showCone;
+      
+      // Update generator label based on phase
+      const labelText = activePhase === 'lightwave' ? 'Light Generator' : 'Particle Generator';
+      updateGeneratorLabel(sceneRef.current, labelText);
+      
+      console.log('Light cone visibility:', showCone, 'Generator label:', labelText, 'for phase:', activePhase);
+    }
+  }, [activePhase, sceneReady]);
 
   useResponsiveLayout({
     scene: sceneRef.current,

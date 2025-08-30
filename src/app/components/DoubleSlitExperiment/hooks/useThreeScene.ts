@@ -14,6 +14,7 @@ export const useThreeScene = () => {
   const controlsRef = useRef<OrbitControls | null>(null);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const diffractionPanelRef = useRef<THREE.Group | null>(null);
+  const lightConeRef = useRef<THREE.Mesh | null>(null);
   const labelsRef = useRef<THREE.Group[]>([]);
   const particleSystemRef = useRef<ParticleSystem | null>(null);
 
@@ -63,9 +64,10 @@ export const useThreeScene = () => {
     console.log('Three.js setup complete - Camera:', camera.position, 'Target:', controls.target);
 
     // Create experiment setup
-    const { detectionScreen, diffractionPanelGroup } = createExperimentSetup(scene);
+    const { detectionScreen, diffractionPanelGroup, lightCone } = createExperimentSetup(scene);
     detectionScreenRef.current = detectionScreen;
     diffractionPanelRef.current = diffractionPanelGroup;
+    lightConeRef.current = lightCone;
 
     // Create labels
     const labels = createSceneLabels(scene);
@@ -99,6 +101,7 @@ export const useThreeScene = () => {
     controlsRef,
     detectionScreenRef,
     diffractionPanelRef,
+    lightConeRef,
     labelsRef,
     particleSystemRef,
     sceneReady

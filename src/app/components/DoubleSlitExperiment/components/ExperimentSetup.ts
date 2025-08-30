@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export const createExperimentSetup = (scene: THREE.Scene) => {
-  // Particle generator (cube)
+  // Light generator (cube)
   const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
   const cubeMaterial = new THREE.MeshPhongMaterial({
     color: 0xffffff,
@@ -15,8 +15,6 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   const screenGeometry = new THREE.PlaneGeometry(20, 15);
   const screenMaterial = new THREE.MeshBasicMaterial({
     color: 0x333333,
-    transparent: true,
-    opacity: 0.8,
     side: THREE.DoubleSide
   });
   const detectionScreen = new THREE.Mesh(screenGeometry, screenMaterial);
@@ -28,8 +26,6 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   const diffractionPanelGroup = new THREE.Group();
   const diffractionPanelMaterial = new THREE.MeshBasicMaterial({
     color: 0x666666,
-    transparent: true,
-    opacity: 0.7,
     side: THREE.DoubleSide
   });
 
@@ -70,5 +66,23 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
 
   scene.add(diffractionPanelGroup);
 
-  return { detectionScreen, diffractionPanelGroup };
+  // Light cone for wave visualization (initially hidden)
+  const coneRadius = 4; // Base radius at diffraction panel
+  const coneHeight = 15; // Distance from generator (z=0) to diffraction panel (z=15)
+  const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 16, 1, true);
+  const coneMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff0000,
+    transparent: true,
+    opacity: 0.3,
+    side: THREE.DoubleSide
+  });
+  const lightCone = new THREE.Mesh(coneGeometry, coneMaterial);
+  
+  // Position the cone so the tip is at the generator (z=0) and base is at diffraction panel (z=15)
+  lightCone.position.set(0, 0, coneHeight / 2);
+  lightCone.rotation.x = -Math.PI / 2; // Rotate to point towards positive Z (towards slits)
+  lightCone.visible = false; // Initially hidden
+  scene.add(lightCone);
+
+  return { detectionScreen, diffractionPanelGroup, lightCone };
 };
