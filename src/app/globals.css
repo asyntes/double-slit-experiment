@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Font declarations */
 @font-face {
   font-family: 'Nimbus Sans';
   src: url('/fonts/NimbusSanL-Reg.otf') format('opentype');

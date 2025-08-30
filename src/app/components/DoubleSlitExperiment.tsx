@@ -22,25 +22,21 @@ export default function DoubleSlitExperiment() {
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a1a);
     sceneRef.current = scene;
 
-    // Camera setup - three-quarter view from behind and slightly above
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(-3, 2, -8);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
-    // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Add lighting
     const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
 
@@ -52,17 +48,14 @@ export default function DoubleSlitExperiment() {
     pointLight.position.set(0, 0, 5);
     scene.add(pointLight);
 
-    // Create the experiment apparatus
     createExperimentSetup(scene);
 
-    // Add orbit controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = true;
     controls.enableZoom = true;
     controls.enableRotate = true;
     controlsRef.current = controls;
 
-    // Handle window resize
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
@@ -72,7 +65,6 @@ export default function DoubleSlitExperiment() {
 
     window.addEventListener('resize', handleResize);
 
-    // Start animation loop
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
       if (controlsRef.current) {
@@ -102,7 +94,6 @@ export default function DoubleSlitExperiment() {
   }, []);
 
   const createExperimentSetup = (scene: THREE.Scene) => {
-    // Create the white cube particle generator
     const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
     const cubeMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
@@ -112,7 +103,6 @@ export default function DoubleSlitExperiment() {
     cube.position.set(0, 0, 0);
     scene.add(cube);
 
-    // Create detection screen - thin dark rectangle
     const screenGeometry = new THREE.PlaneGeometry(20, 15);
     const screenMaterial = new THREE.MeshBasicMaterial({
       color: 0x333333,
@@ -122,11 +112,10 @@ export default function DoubleSlitExperiment() {
     });
     const detectionScreen = new THREE.Mesh(screenGeometry, screenMaterial);
     detectionScreen.position.set(0, 0, 30);
-    detectionScreen.rotation.x = 0; // Facing the particles
+    detectionScreen.rotation.x = 0;
     scene.add(detectionScreen);
     detectionScreenRef.current = detectionScreen;
 
-    // Create barrier with two slits
     const barrierGroup = new THREE.Group();
     const barrierMaterial = new THREE.MeshBasicMaterial({
       color: 0x666666,
@@ -135,35 +124,30 @@ export default function DoubleSlitExperiment() {
       side: THREE.DoubleSide
     });
 
-    // Top barrier part
     const topGeometry = new THREE.PlaneGeometry(20, 5.5);
     const topBarrier = new THREE.Mesh(topGeometry, barrierMaterial);
     topBarrier.position.set(0, 4.75, 15);
     topBarrier.rotation.y = Math.PI;
     barrierGroup.add(topBarrier);
 
-    // Bottom barrier part
     const bottomGeometry = new THREE.PlaneGeometry(20, 5.5);
     const bottomBarrier = new THREE.Mesh(bottomGeometry, barrierMaterial);
     bottomBarrier.position.set(0, -4.75, 15);
     bottomBarrier.rotation.y = Math.PI;
     barrierGroup.add(bottomBarrier);
 
-    // Left of left slit
     const leftGeometry = new THREE.PlaneGeometry(8.5, 4);
     const leftBarrier = new THREE.Mesh(leftGeometry, barrierMaterial);
     leftBarrier.position.set(-5.75, 0, 15);
     leftBarrier.rotation.y = Math.PI;
     barrierGroup.add(leftBarrier);
 
-    // Between slits
     const middleGeometry = new THREE.PlaneGeometry(1, 4);
     const middleBarrier = new THREE.Mesh(middleGeometry, barrierMaterial);
     middleBarrier.position.set(0, 0, 15);
     middleBarrier.rotation.y = Math.PI;
     barrierGroup.add(middleBarrier);
 
-    // Right of right slit
     const rightGeometry = new THREE.PlaneGeometry(8.5, 4);
     const rightBarrier = new THREE.Mesh(rightGeometry, barrierMaterial);
     rightBarrier.position.set(5.75, 0, 15);
@@ -176,7 +160,6 @@ export default function DoubleSlitExperiment() {
 
 
   const createSingleParticle = (scene: THREE.Scene) => {
-    // Create red particles - smaller size
     const geometry = new THREE.SphereGeometry(0.05, 8, 6);
     const material = new THREE.MeshBasicMaterial({
       color: 0xff0000,
@@ -184,14 +167,12 @@ export default function DoubleSlitExperiment() {
     });
 
     const particle = new THREE.Mesh(geometry, material);
-    // Start from the cube position with increased random offset for wider stream
     particle.position.set(
       (Math.random() - 0.5) * 1.0,
       (Math.random() - 0.5) * 1.0,
       0.5
     );
 
-    // Add random velocity for forward movement with increased spread
     particle.userData = {
       velocity: {
         x: (Math.random() - 0.5) * 0.4,
@@ -207,9 +188,8 @@ export default function DoubleSlitExperiment() {
   };
 
   const createParticles = (scene: THREE.Scene) => {
-    // Start with MORE particles for immediate visibility
     particlesRef.current = [];
-    for (let i = 0; i < 50; i++) { // Increased from 20 to 50
+    for (let i = 0; i < 50; i++) {
       createSingleParticle(scene);
     }
     console.log('Created initial batch of 50 particles');
@@ -218,10 +198,8 @@ export default function DoubleSlitExperiment() {
   const removeParticleFromScene = (particle: THREE.Mesh) => {
     if (!sceneRef.current) return;
 
-    // Remove particle from scene
     sceneRef.current.remove(particle);
 
-    // Dispose particle geometry and material
     if (particle instanceof THREE.Mesh) {
       particle.geometry.dispose();
       if (particle.material instanceof THREE.Material) {
@@ -237,9 +215,8 @@ export default function DoubleSlitExperiment() {
 
     const time = Date.now() * 0.001;
 
-    // Add new particles continuously for dense stream
-    if (particlesRef.current.length < 120) { // Increased to 120 for better continuous flow
-      const particlesToAdd = Math.min(5, 120 - particlesRef.current.length); // Increased to 5 particles per frame
+    if (particlesRef.current.length < 120) {
+      const particlesToAdd = Math.min(5, 120 - particlesRef.current.length);
       for (let i = 0; i < particlesToAdd; i++) {
         if (sceneRef.current) {
           createSingleParticle(sceneRef.current);
@@ -247,40 +224,32 @@ export default function DoubleSlitExperiment() {
       }
     }
 
-    // Update particles
     particlesRef.current = particlesRef.current.filter(particle => {
-      // Move particle based on its velocity
       particle.position.x += particle.userData.velocity.x;
       particle.position.y += particle.userData.velocity.y;
       particle.position.z += particle.userData.velocity.z;
 
-      // Check collision with barrier
       if (particle.position.z >= 15 && !((particle.position.x >= -1.5 && particle.position.x <= -0.5 && particle.position.y >= -2 && particle.position.y <= 2) || (particle.position.x >= 0.5 && particle.position.x <= 1.5 && particle.position.y >= -2 && particle.position.y <= 2))) {
         removeParticleFromScene(particle);
         return false;
       }
 
-      // Check collision with detection screen
       if (detectionScreenRef.current && !particle.userData.isMark && particle.position.z >= 30 &&
         Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
-        // Particle hit the screen - leave a mark at exact screen position
-        particle.position.z = 30; // Set exact position on screen
+        particle.position.z = 30;
         if (particle.material instanceof THREE.MeshBasicMaterial) {
-          particle.material.color.setHex(0xffffff); // Turn white
+          particle.material.color.setHex(0xffffff);
         }
-        // Stop movement
         particle.userData.velocity.x = 0;
         particle.userData.velocity.y = 0;
         particle.userData.velocity.z = 0;
-        // Make it slightly larger to simulate a mark
         particle.scale.setScalar(1.2);
         particle.userData.isMark = true;
         particle.userData.markTime = time;
       }
 
-      // Update mark timer and remove old marks
       if (particle.userData.isMark) {
-        if (time - particle.userData.markTime > 3) { // Remove marks after 3 seconds
+        if (time - particle.userData.markTime > 3) {
           if (sceneRef.current) {
             sceneRef.current.remove(particle);
           }
@@ -292,7 +261,6 @@ export default function DoubleSlitExperiment() {
         }
       }
 
-      // Remove if off screen (far from camera)
       if (particle.position.z > 35 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
         if (sceneRef.current) {
           sceneRef.current.remove(particle);
@@ -314,10 +282,8 @@ export default function DoubleSlitExperiment() {
   const updatePhaseVisualization = () => {
     if (!sceneRef.current) return;
 
-    // Clear previous visualizations
     particlesRef.current.forEach(particle => {
       sceneRef.current!.remove(particle);
-      // Dispose particle geometry and material
       if (particle instanceof THREE.Mesh) {
         particle.geometry.dispose();
         if (particle.material instanceof THREE.Material) {
@@ -327,7 +293,6 @@ export default function DoubleSlitExperiment() {
     });
     particlesRef.current = [];
 
-    // Create particle visualization
     createParticles(sceneRef.current);
   };
 
@@ -335,10 +300,8 @@ export default function DoubleSlitExperiment() {
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-      {/* 3D Scene Container */}
       <div ref={mountRef} className="w-full h-full" />
 
-      {/* State Selector */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
         <div className="flex space-x-2">
           <button className="px-4 py-2 bg-white text-black rounded-md font-semibold text-sm transition-all duration-300 hover:bg-gray-200">
