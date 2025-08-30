@@ -57,6 +57,8 @@ export default function DoubleSlitExperiment() {
     controls.enablePan = true;
     controls.enableZoom = true;
     controls.enableRotate = true;
+    controls.minDistance = 1;
+    controls.maxDistance = 40;
     controlsRef.current = controls;
 
     const handleResize = () => {
