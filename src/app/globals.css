@@ -40,3 +40,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Default landscape layout - single row */
+.status-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-controls button {
+  flex: 1;
+  padding: 0.5rem 1rem;
+}
+
+/* Portrait layout - 2x2 grid */
+@media (orientation: portrait) {
+  .status-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.5rem;
+    height: auto;
+  }
+
+  .status-controls button {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.75rem;
+    width: auto;
+    flex: none;
+  }
+}
