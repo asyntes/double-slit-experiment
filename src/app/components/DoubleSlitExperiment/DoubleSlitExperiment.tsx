@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './DoubleSlitExperiment.css';
 import PhaseSelector from './components/PhaseSelector/PhaseSelector';
 import TopBar from './components/TopBar/TopBar';
 
-const EXPERIMENT_TITLE = 'Particella Classica';
-const EXPERIMENT_DESCRIPTION = 'Le particelle vengono inviate attraverso due fenditure. Passano attraverso una fenditura o l\'altra.';
 
 export default function DoubleSlitExperiment() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -20,6 +18,7 @@ export default function DoubleSlitExperiment() {
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const diffractionPanelRef = useRef<THREE.Group | null>(null);
+  const labelsRef = useRef<THREE.Group[]>([]);
 
 
   useEffect(() => {
@@ -52,6 +51,7 @@ export default function DoubleSlitExperiment() {
     scene.add(pointLight);
 
     createExperimentSetup(scene);
+    createLabels(scene);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = true;
@@ -88,6 +88,21 @@ export default function DoubleSlitExperiment() {
       if (mountRef.current && rendererRef.current?.domElement) {
         mountRef.current.removeChild(rendererRef.current.domElement);
       }
+      
+      // Cleanup labels
+      labelsRef.current.forEach(labelGroup => {
+        if (sceneRef.current) {
+          sceneRef.current.remove(labelGroup);
+        }
+        labelGroup.children.forEach(child => {
+          if (child instanceof THREE.Sprite && child.material.map) {
+            child.material.map.dispose();
+            child.material.dispose();
+          }
+        });
+      });
+      labelsRef.current = [];
+      
       rendererRef.current?.dispose();
     };
   }, []);
@@ -159,6 +174,70 @@ export default function DoubleSlitExperiment() {
 
     scene.add(diffractionPanelGroup);
     diffractionPanelRef.current = diffractionPanelGroup;
+  };
+
+  const createLabels = (scene: THREE.Scene) => {
+    // Particle Generator Label
+    const particleGeneratorLabel = createTextLabel('Particle\nGenerator');
+    particleGeneratorLabel.position.set(0, 1.5, 0);
+    particleGeneratorLabel.scale.setScalar(1);
+    scene.add(particleGeneratorLabel);
+    labelsRef.current.push(particleGeneratorLabel);
+
+    // Diffraction Slit Label
+    const diffractionSlitLabel = createTextLabel('Diffraction\nSlits');
+    diffractionSlitLabel.position.set(0, 8.5, 15);
+    diffractionSlitLabel.scale.setScalar(1);
+    scene.add(diffractionSlitLabel);
+    labelsRef.current.push(diffractionSlitLabel);
+
+    // Detection Screen Label
+    const detectionScreenLabel = createTextLabel('Detection\nScreen');
+    detectionScreenLabel.position.set(0, 8.5, 30);
+    detectionScreenLabel.scale.setScalar(1);
+    scene.add(detectionScreenLabel);
+    labelsRef.current.push(detectionScreenLabel);
+  };
+
+  const createTextLabel = (text: string): THREE.Group => {
+    const labelGroup = new THREE.Group();
+    
+    // Create a simple text using canvas texture as fallback
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    canvas.width = 256;
+    canvas.height = 128;
+    
+    context.fillStyle = 'rgba(0, 0, 0, 0)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    context.fillStyle = 'white';
+    context.font = 'bold 36px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    
+    const lines = text.split('\n');
+    const lineHeight = 45;
+    const startY = canvas.height / 2 - (lines.length - 1) * lineHeight / 2;
+    
+    lines.forEach((line, index) => {
+      context.fillText(line, canvas.width / 2, startY + index * lineHeight);
+    });
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    
+    const spriteMaterial = new THREE.SpriteMaterial({ 
+      map: texture,
+      transparent: true,
+      opacity: 0.9
+    });
+    
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(4, 2, 1);
+    labelGroup.add(sprite);
+    
+    return labelGroup;
   };
 
 
