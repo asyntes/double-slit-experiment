@@ -58,7 +58,7 @@ export default function DoubleSlitExperiment() {
     controls.enableZoom = true;
     controls.enableRotate = true;
     controls.minDistance = 1;
-    controls.maxDistance = 50;
+    controls.maxDistance = 60;
     controlsRef.current = controls;
 
     // Adjust camera distance and position based on orientation
@@ -66,8 +66,8 @@ export default function DoubleSlitExperiment() {
     if (isPortrait) {
       // Calculate direction from target to camera and normalize
       const direction = camera.position.clone().sub(controls.target).normalize();
-      // Set camera at max distance (50) from target
-      camera.position.copy(controls.target).add(direction.multiplyScalar(50));
+      // Set camera at max distance (60) from target
+      camera.position.copy(controls.target).add(direction.multiplyScalar(60));
       // Move camera down to show scene higher on screen
       camera.position.y -= 8;
       // Update controls to reflect the new camera position
