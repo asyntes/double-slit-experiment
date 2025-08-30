@@ -110,12 +110,26 @@ export default function DoubleSlitExperiment() {
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
     cube.position.set(0, 0, 0);
     scene.add(cube);
+
+    // Create detection screen - thin dark rectangle
+    const screenGeometry = new THREE.PlaneGeometry(20, 15);
+    const screenMaterial = new THREE.MeshBasicMaterial({
+      color: 0x333333,
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide
+    });
+    const detectionScreen = new THREE.Mesh(screenGeometry, screenMaterial);
+    detectionScreen.position.set(0, 0, 30);
+    detectionScreen.rotation.x = 0; // Facing the particles
+    scene.add(detectionScreen);
+    detectionScreenRef.current = detectionScreen;
   };
 
 
   const createSingleParticle = (scene: THREE.Scene) => {
     // Create red particles
-    const geometry = new THREE.SphereGeometry(0.2, 8, 6);
+    const geometry = new THREE.SphereGeometry(0.1, 8, 6);
     const material = new THREE.MeshBasicMaterial({
       color: 0xff0000,
       transparent: false
@@ -135,7 +149,9 @@ export default function DoubleSlitExperiment() {
         x: (Math.random() - 0.5) * 0.2,
         y: (Math.random() - 0.5) * 0.2,
         z: 0.5 + Math.random() * 0.3
-      }
+      },
+      isMark: false,
+      markTime: 0
     };
 
     scene.add(particle);
@@ -174,15 +190,12 @@ export default function DoubleSlitExperiment() {
     const time = Date.now() * 0.001;
 
     // Add new particles continuously for dense stream
-    if (particlesRef.current.length < 80) { // Maintain around 80 particles for good visibility
-      const particlesToAdd = Math.min(3, 80 - particlesRef.current.length);
+    if (particlesRef.current.length < 120) { // Increased to 120 for better continuous flow
+      const particlesToAdd = Math.min(5, 120 - particlesRef.current.length); // Increased to 5 particles per frame
       for (let i = 0; i < particlesToAdd; i++) {
         if (sceneRef.current) {
           createSingleParticle(sceneRef.current);
         }
-      }
-      if (particlesToAdd > 0) {
-        console.log(`Added ${particlesToAdd} new particles. Total: ${particlesRef.current.length}`);
       }
     }
 
@@ -193,8 +206,40 @@ export default function DoubleSlitExperiment() {
       particle.position.y += particle.userData.velocity.y;
       particle.position.z += particle.userData.velocity.z;
 
+      // Check collision with detection screen
+      if (detectionScreenRef.current && !particle.userData.isMark && particle.position.z >= 30 &&
+        Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
+        // Particle hit the screen - leave a mark at exact screen position
+        particle.position.z = 30; // Set exact position on screen
+        if (particle.material instanceof THREE.MeshBasicMaterial) {
+          particle.material.color.setHex(0xffffff); // Turn white
+        }
+        // Stop movement
+        particle.userData.velocity.x = 0;
+        particle.userData.velocity.y = 0;
+        particle.userData.velocity.z = 0;
+        // Make it slightly larger to simulate a mark
+        particle.scale.setScalar(1.2);
+        particle.userData.isMark = true;
+        particle.userData.markTime = time;
+      }
+
+      // Update mark timer and remove old marks
+      if (particle.userData.isMark) {
+        if (time - particle.userData.markTime > 3) { // Remove marks after 3 seconds
+          if (sceneRef.current) {
+            sceneRef.current.remove(particle);
+          }
+          particle.geometry.dispose();
+          if (particle.material instanceof THREE.Material) {
+            particle.material.dispose();
+          }
+          return false;
+        }
+      }
+
       // Remove if off screen (far from camera)
-      if (particle.position.z > 20 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
+      if (particle.position.z > 35 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
         if (sceneRef.current) {
           sceneRef.current.remove(particle);
         }
