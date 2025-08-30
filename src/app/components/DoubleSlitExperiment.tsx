@@ -16,6 +16,7 @@ export default function DoubleSlitExperiment() {
   const particlesRef = useRef<THREE.Mesh[]>([]);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const barrierRef = useRef<THREE.Group | null>(null);
 
 
   useEffect(() => {
@@ -124,6 +125,53 @@ export default function DoubleSlitExperiment() {
     detectionScreen.rotation.x = 0; // Facing the particles
     scene.add(detectionScreen);
     detectionScreenRef.current = detectionScreen;
+
+    // Create barrier with two slits
+    const barrierGroup = new THREE.Group();
+    const barrierMaterial = new THREE.MeshBasicMaterial({
+      color: 0x666666,
+      transparent: true,
+      opacity: 0.7,
+      side: THREE.DoubleSide
+    });
+
+    // Top barrier part
+    const topGeometry = new THREE.PlaneGeometry(20, 5.5);
+    const topBarrier = new THREE.Mesh(topGeometry, barrierMaterial);
+    topBarrier.position.set(0, 4.75, 15);
+    topBarrier.rotation.y = Math.PI;
+    barrierGroup.add(topBarrier);
+
+    // Bottom barrier part
+    const bottomGeometry = new THREE.PlaneGeometry(20, 5.5);
+    const bottomBarrier = new THREE.Mesh(bottomGeometry, barrierMaterial);
+    bottomBarrier.position.set(0, -4.75, 15);
+    bottomBarrier.rotation.y = Math.PI;
+    barrierGroup.add(bottomBarrier);
+
+    // Left of left slit
+    const leftGeometry = new THREE.PlaneGeometry(8.5, 4);
+    const leftBarrier = new THREE.Mesh(leftGeometry, barrierMaterial);
+    leftBarrier.position.set(-5.75, 0, 15);
+    leftBarrier.rotation.y = Math.PI;
+    barrierGroup.add(leftBarrier);
+
+    // Between slits
+    const middleGeometry = new THREE.PlaneGeometry(1, 4);
+    const middleBarrier = new THREE.Mesh(middleGeometry, barrierMaterial);
+    middleBarrier.position.set(0, 0, 15);
+    middleBarrier.rotation.y = Math.PI;
+    barrierGroup.add(middleBarrier);
+
+    // Right of right slit
+    const rightGeometry = new THREE.PlaneGeometry(8.5, 4);
+    const rightBarrier = new THREE.Mesh(rightGeometry, barrierMaterial);
+    rightBarrier.position.set(5.75, 0, 15);
+    rightBarrier.rotation.y = Math.PI;
+    barrierGroup.add(rightBarrier);
+
+    scene.add(barrierGroup);
+    barrierRef.current = barrierGroup;
   };
 
 
@@ -205,6 +253,12 @@ export default function DoubleSlitExperiment() {
       particle.position.x += particle.userData.velocity.x;
       particle.position.y += particle.userData.velocity.y;
       particle.position.z += particle.userData.velocity.z;
+
+      // Check collision with barrier
+      if (particle.position.z >= 15 && !((particle.position.x >= -1.5 && particle.position.x <= -0.5 && particle.position.y >= -2 && particle.position.y <= 2) || (particle.position.x >= 0.5 && particle.position.x <= 1.5 && particle.position.y >= -2 && particle.position.y <= 2))) {
+        removeParticleFromScene(particle);
+        return false;
+      }
 
       // Check collision with detection screen
       if (detectionScreenRef.current && !particle.userData.isMark && particle.position.z >= 30 &&
