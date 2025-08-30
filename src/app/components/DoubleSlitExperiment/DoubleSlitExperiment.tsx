@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import './DoubleSlitExperiment.css';
+import PhaseSelector from './components/PhaseSelector/PhaseSelector';
+import TopBar from './components/TopBar/TopBar';
 
-const EXPERIMENT_TITLE = 'Particella Classica';
-const EXPERIMENT_DESCRIPTION = 'Le particelle vengono inviate attraverso due fenditure. Passano attraverso una fenditura o l\'altra.';
 
 export default function DoubleSlitExperiment() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -16,7 +17,8 @@ export default function DoubleSlitExperiment() {
   const particlesRef = useRef<THREE.Mesh[]>([]);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
-  const barrierRef = useRef<THREE.Group | null>(null);
+  const diffractionPanelRef = useRef<THREE.Group | null>(null);
+  const labelsRef = useRef<THREE.Group[]>([]);
 
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function DoubleSlitExperiment() {
     scene.add(pointLight);
 
     createExperimentSetup(scene);
+    createLabels(scene);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = true;
@@ -85,6 +88,21 @@ export default function DoubleSlitExperiment() {
       if (mountRef.current && rendererRef.current?.domElement) {
         mountRef.current.removeChild(rendererRef.current.domElement);
       }
+      
+      // Cleanup labels
+      labelsRef.current.forEach(labelGroup => {
+        if (sceneRef.current) {
+          sceneRef.current.remove(labelGroup);
+        }
+        labelGroup.children.forEach(child => {
+          if (child instanceof THREE.Sprite && child.material.map) {
+            child.material.map.dispose();
+            child.material.dispose();
+          }
+        });
+      });
+      labelsRef.current = [];
+      
       rendererRef.current?.dispose();
     };
   }, []);
@@ -116,8 +134,8 @@ export default function DoubleSlitExperiment() {
     scene.add(detectionScreen);
     detectionScreenRef.current = detectionScreen;
 
-    const barrierGroup = new THREE.Group();
-    const barrierMaterial = new THREE.MeshBasicMaterial({
+    const diffractionPanelGroup = new THREE.Group();
+    const diffractionPanelMaterial = new THREE.MeshBasicMaterial({
       color: 0x666666,
       transparent: true,
       opacity: 0.7,
@@ -125,37 +143,101 @@ export default function DoubleSlitExperiment() {
     });
 
     const topGeometry = new THREE.PlaneGeometry(20, 5.5);
-    const topBarrier = new THREE.Mesh(topGeometry, barrierMaterial);
-    topBarrier.position.set(0, 4.75, 15);
-    topBarrier.rotation.y = Math.PI;
-    barrierGroup.add(topBarrier);
+    const topDiffractionPanel = new THREE.Mesh(topGeometry, diffractionPanelMaterial);
+    topDiffractionPanel.position.set(0, 4.75, 15);
+    topDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(topDiffractionPanel);
 
     const bottomGeometry = new THREE.PlaneGeometry(20, 5.5);
-    const bottomBarrier = new THREE.Mesh(bottomGeometry, barrierMaterial);
-    bottomBarrier.position.set(0, -4.75, 15);
-    bottomBarrier.rotation.y = Math.PI;
-    barrierGroup.add(bottomBarrier);
+    const bottomDiffractionPanel = new THREE.Mesh(bottomGeometry, diffractionPanelMaterial);
+    bottomDiffractionPanel.position.set(0, -4.75, 15);
+    bottomDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(bottomDiffractionPanel);
 
     const leftGeometry = new THREE.PlaneGeometry(8.5, 4);
-    const leftBarrier = new THREE.Mesh(leftGeometry, barrierMaterial);
-    leftBarrier.position.set(-5.75, 0, 15);
-    leftBarrier.rotation.y = Math.PI;
-    barrierGroup.add(leftBarrier);
+    const leftDiffractionPanel = new THREE.Mesh(leftGeometry, diffractionPanelMaterial);
+    leftDiffractionPanel.position.set(-5.75, 0, 15);
+    leftDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(leftDiffractionPanel);
 
     const middleGeometry = new THREE.PlaneGeometry(1, 4);
-    const middleBarrier = new THREE.Mesh(middleGeometry, barrierMaterial);
-    middleBarrier.position.set(0, 0, 15);
-    middleBarrier.rotation.y = Math.PI;
-    barrierGroup.add(middleBarrier);
+    const middleDiffractionPanel = new THREE.Mesh(middleGeometry, diffractionPanelMaterial);
+    middleDiffractionPanel.position.set(0, 0, 15);
+    middleDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(middleDiffractionPanel);
 
     const rightGeometry = new THREE.PlaneGeometry(8.5, 4);
-    const rightBarrier = new THREE.Mesh(rightGeometry, barrierMaterial);
-    rightBarrier.position.set(5.75, 0, 15);
-    rightBarrier.rotation.y = Math.PI;
-    barrierGroup.add(rightBarrier);
+    const rightDiffractionPanel = new THREE.Mesh(rightGeometry, diffractionPanelMaterial);
+    rightDiffractionPanel.position.set(5.75, 0, 15);
+    rightDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(rightDiffractionPanel);
 
-    scene.add(barrierGroup);
-    barrierRef.current = barrierGroup;
+    scene.add(diffractionPanelGroup);
+    diffractionPanelRef.current = diffractionPanelGroup;
+  };
+
+  const createLabels = (scene: THREE.Scene) => {
+    // Particle Generator Label
+    const particleGeneratorLabel = createTextLabel('Particle\nGenerator');
+    particleGeneratorLabel.position.set(0, 1.5, 0);
+    particleGeneratorLabel.scale.setScalar(1);
+    scene.add(particleGeneratorLabel);
+    labelsRef.current.push(particleGeneratorLabel);
+
+    // Diffraction Slit Label
+    const diffractionSlitLabel = createTextLabel('Diffraction\nSlits');
+    diffractionSlitLabel.position.set(0, 8.5, 15);
+    diffractionSlitLabel.scale.setScalar(1);
+    scene.add(diffractionSlitLabel);
+    labelsRef.current.push(diffractionSlitLabel);
+
+    // Detection Screen Label
+    const detectionScreenLabel = createTextLabel('Detection\nScreen');
+    detectionScreenLabel.position.set(0, 8.5, 30);
+    detectionScreenLabel.scale.setScalar(1);
+    scene.add(detectionScreenLabel);
+    labelsRef.current.push(detectionScreenLabel);
+  };
+
+  const createTextLabel = (text: string): THREE.Group => {
+    const labelGroup = new THREE.Group();
+    
+    // Create a simple text using canvas texture as fallback
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    canvas.width = 256;
+    canvas.height = 128;
+    
+    context.fillStyle = 'rgba(0, 0, 0, 0)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    context.fillStyle = 'white';
+    context.font = 'bold 36px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    
+    const lines = text.split('\n');
+    const lineHeight = 45;
+    const startY = canvas.height / 2 - (lines.length - 1) * lineHeight / 2;
+    
+    lines.forEach((line, index) => {
+      context.fillText(line, canvas.width / 2, startY + index * lineHeight);
+    });
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    
+    const spriteMaterial = new THREE.SpriteMaterial({ 
+      map: texture,
+      transparent: true,
+      opacity: 0.9
+    });
+    
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(4, 2, 1);
+    labelGroup.add(sprite);
+    
+    return labelGroup;
   };
 
 
@@ -248,18 +330,6 @@ export default function DoubleSlitExperiment() {
         particle.userData.markTime = time;
       }
 
-      if (particle.userData.isMark) {
-        if (time - particle.userData.markTime > 3) {
-          if (sceneRef.current) {
-            sceneRef.current.remove(particle);
-          }
-          particle.geometry.dispose();
-          if (particle.material instanceof THREE.Material) {
-            particle.material.dispose();
-          }
-          return false;
-        }
-      }
 
       if (particle.position.z > 35 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
         if (sceneRef.current) {
@@ -301,38 +371,10 @@ export default function DoubleSlitExperiment() {
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
       <div ref={mountRef} className="w-full h-full" />
-      
-      <div className="absolute top-0 left-0 right-0 bg-black/40 p-4 flex justify-between items-center z-10" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
-        <h1 className="text-white text-lg font-semibold">Double Slit Experiment</h1>
-        <a href="https://github.com/asyntes/double-slit-experiment" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300 transition-colors">
-          <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-        </a>
-      </div>
 
-      <div className="phase-selector absolute bottom-4 left-4 right-4 bg-black/40 backdrop-blur-sm rounded-lg p-3 border border-white/20" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
-        <div className="phase-selector-controls">
-          <button className="px-4 py-2 bg-white/90 text-black rounded-md font-semibold text-sm transition-all duration-300 hover:bg-white uppercase">
-            Particle
-          </button>
-          <button className="px-4 py-2 bg-black/60 border border-white/30 text-white rounded-md font-semibold text-sm cursor-not-allowed opacity-50 uppercase" disabled>
-            Wave
-          </button>
-          <button className="px-4 py-2 bg-black/60 border border-white/30 text-white rounded-md font-semibold text-sm cursor-not-allowed opacity-50 uppercase" disabled>
-            Quantum Object
-          </button>
-          <button className="px-4 py-2 bg-black/60 border border-white/30 text-white rounded-md font-semibold text-sm cursor-not-allowed opacity-50 uppercase" disabled>
-            Add an Observer
-          </button>
-        </div>
-        
-        <div className="phase-explanation mt-3 p-3 bg-black/60 rounded-md border border-white/10">
-          <p className="text-white text-sm leading-relaxed">
-            Particles are fired towards two slits. Each particle travels through one slit or the other, creating random impact points on the detection screen.
-          </p>
-        </div>
-      </div>
+      <TopBar />
+
+      <PhaseSelector />
 
     </div>
   );

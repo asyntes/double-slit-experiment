@@ -1,0 +1,28 @@
+/* Default landscape layout - single row */
+.phase-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.phase-controls button {
+  flex: 1;
+  padding: 0.5rem 1rem !important;
+}
+
+/* Portrait layout - 2x2 grid */
+@media (orientation: portrait) {
+  .phase-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(2, 1fr);
+    gap: 0.5rem;
+    height: auto;
+  }
+
+  .phase-controls button {
+    padding: 0.75rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    width: auto;
+    flex: none;
+  }
+}
