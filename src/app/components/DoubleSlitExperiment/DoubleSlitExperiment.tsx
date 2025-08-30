@@ -178,21 +178,21 @@ export default function DoubleSlitExperiment() {
 
   const createLabels = (scene: THREE.Scene) => {
     // Particle Generator Label
-    const particleGeneratorLabel = createTextLabel('Particle\nGenerator');
+    const particleGeneratorLabel = createTextLabel('Particle Generator');
     particleGeneratorLabel.position.set(0, 1.5, 0);
     particleGeneratorLabel.scale.setScalar(1);
     scene.add(particleGeneratorLabel);
     labelsRef.current.push(particleGeneratorLabel);
 
     // Diffraction Slit Label
-    const diffractionSlitLabel = createTextLabel('Diffraction\nSlits');
+    const diffractionSlitLabel = createTextLabel('Diffraction Slits');
     diffractionSlitLabel.position.set(0, 8.5, 15);
     diffractionSlitLabel.scale.setScalar(1);
     scene.add(diffractionSlitLabel);
     labelsRef.current.push(diffractionSlitLabel);
 
     // Detection Screen Label
-    const detectionScreenLabel = createTextLabel('Detection\nScreen');
+    const detectionScreenLabel = createTextLabel('Detection Screen');
     detectionScreenLabel.position.set(0, 8.5, 30);
     detectionScreenLabel.scale.setScalar(1);
     scene.add(detectionScreenLabel);
@@ -205,7 +205,7 @@ export default function DoubleSlitExperiment() {
     // Create a simple text using canvas texture as fallback
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d')!;
-    canvas.width = 256;
+    canvas.width = 512;
     canvas.height = 128;
     
     context.fillStyle = 'rgba(0, 0, 0, 0)';
@@ -234,7 +234,7 @@ export default function DoubleSlitExperiment() {
     });
     
     const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(4, 2, 1);
+    sprite.scale.set(6, 1.5, 1);
     labelGroup.add(sprite);
     
     return labelGroup;
