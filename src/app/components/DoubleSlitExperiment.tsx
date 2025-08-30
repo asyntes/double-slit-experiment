@@ -17,7 +17,6 @@ export default function DoubleSlitExperiment() {
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
 
-  const [particleCount, setParticleCount] = useState(0);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -233,9 +232,6 @@ export default function DoubleSlitExperiment() {
     createParticles(sceneRef.current);
   };
 
-  const resetCounter = () => {
-    setParticleCount(0);
-  };
 
 
   return (
@@ -243,77 +239,24 @@ export default function DoubleSlitExperiment() {
       {/* 3D Scene Container */}
       <div ref={mountRef} className="w-full h-full" />
 
-      {/* Top Info Bar */}
-      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 text-center" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-            ESPERIMENTO DELLA DOPPIA FENDITURA
-          </h1>
-          <h2 className="text-lg md:text-xl font-semibold text-white text-center mb-1" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-            {EXPERIMENT_TITLE}
-          </h2>
-          <p className="text-sm md:text-base text-gray-400 text-center max-w-2xl mx-auto" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-            {EXPERIMENT_DESCRIPTION}
-          </p>
-          <div className="text-center mt-2">
-            <span className="text-lg font-semibold text-white" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-              Particelle Rilevate: {particleCount}
-            </span>
-          </div>
+      {/* State Selector */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
+        <div className="flex space-x-2">
+          <button className="px-4 py-2 bg-white text-black rounded-md font-semibold text-sm transition-all duration-300 hover:bg-gray-200">
+            Particle
+          </button>
+          <button className="px-4 py-2 bg-black border border-white/30 text-white rounded-md font-semibold text-sm cursor-not-allowed opacity-50" disabled>
+            Wave
+          </button>
+          <button className="px-4 py-2 bg-black border border-white/30 text-white rounded-md font-semibold text-sm cursor-not-allowed opacity-50" disabled>
+            Quantum Object
+          </button>
+          <button className="px-4 py-2 bg-black border border-white/30 text-white rounded-md font-semibold text-sm cursor-not-allowed opacity-50" disabled>
+            Add an Observer
+          </button>
         </div>
       </div>
 
-      {/* Bottom Control Panel - Full Width */}
-      <div className="absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-white/20">
-        <div className="max-w-6xl mx-auto p-4">
-          {/* Phase Selection Buttons */}
-          <div className="flex justify-center mb-4">
-            <button
-              className="px-6 py-3 bg-white text-black rounded-lg font-semibold text-sm md:text-base shadow-lg"
-              style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}
-            >
-              PARTICELLA
-            </button>
-          </div>
-
-          {/* Reset Counter Button */}
-          <div className="flex justify-center">
-            <button
-              onClick={resetCounter}
-              className="px-6 py-3 bg-black border border-white/30 text-white hover:bg-white/10 font-bold text-sm rounded-full transition-all duration-300 transform hover:scale-105"
-              style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}
-            >
-              RESET CONTATORE
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Side Instructions */}
-      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/90 backdrop-blur-sm rounded-lg p-4 text-white max-w-xs hidden lg:block border border-white/20">
-        <h3 className="font-bold text-white mb-3 text-center" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>GUIDA ESPERIMENTO</h3>
-        <div className="space-y-3 text-sm" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-          <div>
-            <div className="font-semibold text-white mb-1">PARTICELLA CLASSICA:</div>
-            <div className="text-gray-300 text-xs">Ogni particella passa attraverso UNA sola fenditura</div>
-          </div>
-          <div className="mt-3">
-            <div className="text-gray-400 text-xs">
-              <strong>Particelle rosse:</strong> Passano attraverso la fenditura superiore
-            </div>
-          </div>
-          <div className="mt-2">
-            <div className="text-gray-400 text-xs">
-              <strong>Particelle blu:</strong> Passano attraverso la fenditura inferiore
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 pt-3 border-t border-white/20">
-          <div className="text-xs text-gray-400 text-center" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
-            <strong>Consiglio:</strong> Osserva il flusso continuo di particelle
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
