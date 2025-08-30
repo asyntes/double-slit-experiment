@@ -1,390 +1,142 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './DoubleSlitExperiment.css';
 import PhaseSelector from './components/PhaseSelector/PhaseSelector';
 import TopBar from './components/TopBar/TopBar';
+import { useThreeScene } from './hooks/useThreeScene';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
+import { useExperimentAnimation } from './hooks/useExperimentAnimation';
+import { updateGeneratorLabel } from './components/SceneLabels';
 
 
 export default function DoubleSlitExperiment() {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const animationIdRef = useRef<number | null>(null);
-  const particlesRef = useRef<THREE.Mesh[]>([]);
-  const detectionScreenRef = useRef<THREE.Mesh | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
-  const diffractionPanelRef = useRef<THREE.Group | null>(null);
-  const labelsRef = useRef<THREE.Group[]>([]);
+  const [activePhase, setActivePhase] = useState('proton');
 
-
-  useEffect(() => {
-    if (!mountRef.current) return;
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1a1a);
-    sceneRef.current = scene;
-
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(-19.165995152477358, 9.637643699188821, 5.055107657476825);
-    cameraRef.current = camera;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
-
-    const pointLight = new THREE.PointLight(0x4444ff, 0.5, 20);
-    pointLight.position.set(0, 0, 5);
-    scene.add(pointLight);
-
-    createExperimentSetup(scene);
-    createLabels(scene);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(1.6695085561159786, -3.0874538457220844, 16.502079563322997);
-    controls.enablePan = true;
-    controls.enableZoom = true;
-    controls.enableRotate = true;
-    controls.minDistance = 1;
-    controls.maxDistance = 60;
-    controlsRef.current = controls;
-
-    // Adjust camera distance and position based on orientation
-    const isPortrait = window.innerHeight > window.innerWidth;
-    if (isPortrait) {
-      // Calculate direction from target to camera and normalize
-      const direction = camera.position.clone().sub(controls.target).normalize();
-      // Set camera at max distance (60) from target
-      camera.position.copy(controls.target).add(direction.multiplyScalar(60));
-      // Move camera down to show scene higher on screen
-      camera.position.y -= 8;
-      // Update controls to reflect the new camera position
-      controls.update();
-    }
-
-    // Log camera position and target when it changes
-    controls.addEventListener('change', () => {
-      console.log('Camera position:', camera.position);
-      console.log('Camera target:', controls.target);
-    });
-
-    const handleResize = () => {
-      if (!cameraRef.current || !rendererRef.current) return;
-      cameraRef.current.aspect = window.innerWidth / window.innerHeight;
-      cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(window.innerWidth, window.innerHeight);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    const animate = () => {
-      animationIdRef.current = requestAnimationFrame(animate);
-      if (controlsRef.current) {
-        controlsRef.current.update();
-      }
-      updateExperiment();
-      if (rendererRef.current && cameraRef.current) {
-        rendererRef.current.render(scene, cameraRef.current);
-      }
-    };
-    animate();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animationIdRef.current) {
-        cancelAnimationFrame(animationIdRef.current);
-      }
-      if (mountRef.current && rendererRef.current?.domElement) {
-        mountRef.current.removeChild(rendererRef.current.domElement);
-      }
-
-      // Cleanup labels
-      labelsRef.current.forEach(labelGroup => {
-        if (sceneRef.current) {
-          sceneRef.current.remove(labelGroup);
-        }
-        labelGroup.children.forEach(child => {
-          if (child instanceof THREE.Sprite && child.material.map) {
-            child.material.map.dispose();
-            child.material.dispose();
-          }
-        });
-      });
-      labelsRef.current = [];
-
-      rendererRef.current?.dispose();
-    };
-  }, []);
-
-  useEffect(() => {
-    updatePhaseVisualization();
-  }, []);
-
-  const createExperimentSetup = (scene: THREE.Scene) => {
-    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const cubeMaterial = new THREE.MeshPhongMaterial({
-      color: 0xffffff,
-      emissive: 0x222222
-    });
-    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    cube.position.set(0, 0, 0);
-    scene.add(cube);
-
-    const screenGeometry = new THREE.PlaneGeometry(20, 15);
-    const screenMaterial = new THREE.MeshBasicMaterial({
-      color: 0x333333,
-      transparent: true,
-      opacity: 0.8,
-      side: THREE.DoubleSide
-    });
-    const detectionScreen = new THREE.Mesh(screenGeometry, screenMaterial);
-    detectionScreen.position.set(0, 0, 30);
-    detectionScreen.rotation.x = 0;
-    scene.add(detectionScreen);
-    detectionScreenRef.current = detectionScreen;
-
-    const diffractionPanelGroup = new THREE.Group();
-    const diffractionPanelMaterial = new THREE.MeshBasicMaterial({
-      color: 0x666666,
-      transparent: true,
-      opacity: 0.7,
-      side: THREE.DoubleSide
-    });
-
-    const topGeometry = new THREE.PlaneGeometry(20, 5.5);
-    const topDiffractionPanel = new THREE.Mesh(topGeometry, diffractionPanelMaterial);
-    topDiffractionPanel.position.set(0, 4.75, 15);
-    topDiffractionPanel.rotation.y = Math.PI;
-    diffractionPanelGroup.add(topDiffractionPanel);
-
-    const bottomGeometry = new THREE.PlaneGeometry(20, 5.5);
-    const bottomDiffractionPanel = new THREE.Mesh(bottomGeometry, diffractionPanelMaterial);
-    bottomDiffractionPanel.position.set(0, -4.75, 15);
-    bottomDiffractionPanel.rotation.y = Math.PI;
-    diffractionPanelGroup.add(bottomDiffractionPanel);
-
-    const leftGeometry = new THREE.PlaneGeometry(8.5, 4);
-    const leftDiffractionPanel = new THREE.Mesh(leftGeometry, diffractionPanelMaterial);
-    leftDiffractionPanel.position.set(-5.75, 0, 15);
-    leftDiffractionPanel.rotation.y = Math.PI;
-    diffractionPanelGroup.add(leftDiffractionPanel);
-
-    const middleGeometry = new THREE.PlaneGeometry(1, 4);
-    const middleDiffractionPanel = new THREE.Mesh(middleGeometry, diffractionPanelMaterial);
-    middleDiffractionPanel.position.set(0, 0, 15);
-    middleDiffractionPanel.rotation.y = Math.PI;
-    diffractionPanelGroup.add(middleDiffractionPanel);
-
-    const rightGeometry = new THREE.PlaneGeometry(8.5, 4);
-    const rightDiffractionPanel = new THREE.Mesh(rightGeometry, diffractionPanelMaterial);
-    rightDiffractionPanel.position.set(5.75, 0, 15);
-    rightDiffractionPanel.rotation.y = Math.PI;
-    diffractionPanelGroup.add(rightDiffractionPanel);
-
-    scene.add(diffractionPanelGroup);
-    diffractionPanelRef.current = diffractionPanelGroup;
-  };
-
-  const createLabels = (scene: THREE.Scene) => {
-    // Particle Generator Label
-    const particleGeneratorLabel = createTextLabel('Particle Generator');
-    particleGeneratorLabel.position.set(0, 1.5, 0);
-    particleGeneratorLabel.scale.setScalar(1);
-    scene.add(particleGeneratorLabel);
-    labelsRef.current.push(particleGeneratorLabel);
-
-    // Diffraction Slit Label
-    const diffractionSlitLabel = createTextLabel('Diffraction Slits');
-    diffractionSlitLabel.position.set(0, 8.5, 15);
-    diffractionSlitLabel.scale.setScalar(1);
-    scene.add(diffractionSlitLabel);
-    labelsRef.current.push(diffractionSlitLabel);
-
-    // Detection Screen Label
-    const detectionScreenLabel = createTextLabel('Detection Screen');
-    detectionScreenLabel.position.set(0, 8.5, 30);
-    detectionScreenLabel.scale.setScalar(1);
-    scene.add(detectionScreenLabel);
-    labelsRef.current.push(detectionScreenLabel);
-  };
-
-  const createTextLabel = (text: string): THREE.Group => {
-    const labelGroup = new THREE.Group();
-
-    // Create a simple text using canvas texture as fallback
+  const createStripeTexture = (): THREE.CanvasTexture => {
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d')!;
     canvas.width = 512;
-    canvas.height = 128;
+    canvas.height = 384;
+    const ctx = canvas.getContext('2d')!;
 
-    context.fillStyle = 'rgba(0, 0, 0, 0)';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    context.fillStyle = 'white';
-    context.font = 'bold 36px Arial';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
+    const totalWidth = canvas.width;
+    const stripeRegionWidth = totalWidth * 0.5;
+    const stripeRegionStart = (totalWidth - stripeRegionWidth) / 2;
+    const stripeHeight = canvas.height * (4 / 15);
+    const stripeRegionTop = (canvas.height - stripeHeight) / 2;
 
-    const lines = text.split('\n');
-    const lineHeight = 45;
-    const startY = canvas.height / 2 - (lines.length - 1) * lineHeight / 2;
+    const stripeWidth = stripeRegionWidth / 20;
+    ctx.fillStyle = '#ffffff';
 
-    lines.forEach((line, index) => {
-      context.fillText(line, canvas.width / 2, startY + index * lineHeight);
-    });
+    for (let i = 0; i < 20; i += 2) {
+      const x = stripeRegionStart + (i * stripeWidth);
+      ctx.fillRect(x, stripeRegionTop, stripeWidth, stripeHeight);
+    }
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.needsUpdate = true;
-
-    const spriteMaterial = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
-      opacity: 0.9
-    });
-
-    const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(6, 1.5, 1);
-    labelGroup.add(sprite);
-
-    return labelGroup;
+    return texture;
   };
 
+  const {
+    mountRef,
+    sceneRef,
+    rendererRef,
+    cameraRef,
+    controlsRef,
+    detectionScreenRef,
+    diffractionPanelRef,
+    lightConeRef,
+    leftTrapezoidRef,
+    rightTrapezoidRef,
+    labelsRef,
+    particleSystemRef,
+    sceneReady
+  } = useThreeScene();
 
-  const createSingleParticle = (scene: THREE.Scene) => {
-    const geometry = new THREE.SphereGeometry(0.05, 8, 6);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
-      transparent: false
-    });
-
-    const particle = new THREE.Mesh(geometry, material);
-    particle.position.set(
-      (Math.random() - 0.5) * 1.0,
-      (Math.random() - 0.5) * 1.0,
-      0.5
-    );
-
-    particle.userData = {
-      velocity: {
-        x: (Math.random() - 0.5) * 0.4,
-        y: (Math.random() - 0.5) * 0.4,
-        z: 0.5 + Math.random() * 0.3
-      },
-      isMark: false,
-      markTime: 0
-    };
-
-    scene.add(particle);
-    particlesRef.current.push(particle);
-  };
-
-  const createParticles = (scene: THREE.Scene) => {
-    particlesRef.current = [];
-    for (let i = 0; i < 50; i++) {
-      createSingleParticle(scene);
+  useEffect(() => {
+    if (sceneReady) {
+      console.log('Scene ready, particle system available:', !!particleSystemRef.current);
     }
-    console.log('Created initial batch of 50 particles');
-  };
+  }, [sceneReady]);
 
-  const removeParticleFromScene = (particle: THREE.Mesh) => {
-    if (!sceneRef.current) return;
+  // Handle light cone, trapezoids visibility and generator label based on active phase
+  useEffect(() => {
+    if (lightConeRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && sceneRef.current && detectionScreenRef.current) {
+      const showLightElements = activePhase === 'lightwave';
 
-    sceneRef.current.remove(particle);
+      lightConeRef.current.visible = showLightElements;
+      leftTrapezoidRef.current.visible = showLightElements;
+      rightTrapezoidRef.current.visible = showLightElements;
 
-    if (particle instanceof THREE.Mesh) {
-      particle.geometry.dispose();
-      if (particle.material instanceof THREE.Material) {
-        particle.material.dispose();
+      if (activePhase === 'lightwave') {
+        const stripeTexture = createStripeTexture();
+        const stripeMaterial = new THREE.MeshBasicMaterial({
+          map: stripeTexture,
+          color: 0x727272,
+          side: THREE.DoubleSide
+        });
+        detectionScreenRef.current.material = stripeMaterial;
+      } else {
+        const defaultMaterial = new THREE.MeshBasicMaterial({
+          color: 0x333333,
+          side: THREE.DoubleSide
+        });
+        detectionScreenRef.current.material = defaultMaterial;
       }
+
+      // Update generator label based on phase
+      const labelText = activePhase === 'lightwave' ? 'Light Generator' : 'Particle Generator';
+      updateGeneratorLabel(sceneRef.current, labelText);
+
+      console.log('Light elements visibility:', showLightElements, 'Generator label:', labelText, 'for phase:', activePhase);
     }
-  };
+  }, [activePhase, sceneReady]);
+
+  useResponsiveLayout({
+    scene: sceneRef.current,
+    camera: cameraRef.current,
+    renderer: rendererRef.current,
+    controls: controlsRef.current
+  });
+
+  useExperimentAnimation({
+    scene: sceneRef.current,
+    camera: cameraRef.current,
+    renderer: rendererRef.current,
+    controls: controlsRef.current,
+    particleSystem: particleSystemRef.current,
+    detectionScreen: detectionScreenRef.current,
+    activePhase
+  });
 
 
 
-  const updateExperiment = () => {
-    if (!sceneRef.current) return;
+  const handlePhaseChange = (phase: string) => {
+    console.log('Phase changing to:', phase);
 
-    const time = Date.now() * 0.001;
+    setActivePhase(phase);
 
-    if (particlesRef.current.length < 120) {
-      const particlesToAdd = Math.min(5, 120 - particlesRef.current.length);
-      for (let i = 0; i < particlesToAdd; i++) {
-        if (sceneRef.current) {
-          createSingleParticle(sceneRef.current);
-        }
-      }
+    if (!particleSystemRef.current) {
+      console.log('No particle system available');
+      return;
     }
 
-    particlesRef.current = particlesRef.current.filter(particle => {
-      particle.position.x += particle.userData.velocity.x;
-      particle.position.y += particle.userData.velocity.y;
-      particle.position.z += particle.userData.velocity.z;
-
-      if (particle.position.z >= 15 && !((particle.position.x >= -1.5 && particle.position.x <= -0.5 && particle.position.y >= -2 && particle.position.y <= 2) || (particle.position.x >= 0.5 && particle.position.x <= 1.5 && particle.position.y >= -2 && particle.position.y <= 2))) {
-        removeParticleFromScene(particle);
-        return false;
-      }
-
-      if (detectionScreenRef.current && !particle.userData.isMark && particle.position.z >= 30 &&
-        Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
-        particle.position.z = 30;
-        if (particle.material instanceof THREE.MeshBasicMaterial) {
-          particle.material.color.setHex(0xffffff);
-        }
-        particle.userData.velocity.x = 0;
-        particle.userData.velocity.y = 0;
-        particle.userData.velocity.z = 0;
-        particle.scale.setScalar(1.2);
-        particle.userData.isMark = true;
-        particle.userData.markTime = time;
-      }
-
-
-      if (particle.position.z > 35 || Math.abs(particle.position.x) > 15 || Math.abs(particle.position.y) > 15) {
-        if (sceneRef.current) {
-          sceneRef.current.remove(particle);
-        }
-        particle.geometry.dispose();
-        if (particle.material instanceof THREE.Material) {
-          particle.material.dispose();
-        }
-        return false;
-      }
-
-      return true;
-    });
-
-
-
-  };
-
-  const updatePhaseVisualization = () => {
-    if (!sceneRef.current) return;
-
-    particlesRef.current.forEach(particle => {
-      sceneRef.current!.remove(particle);
-      if (particle instanceof THREE.Mesh) {
-        particle.geometry.dispose();
-        if (particle.material instanceof THREE.Material) {
-          particle.material.dispose();
-        }
-      }
-    });
-    particlesRef.current = [];
-
-    createParticles(sceneRef.current);
+    if (phase === 'lightwave') {
+      console.log('Switching to lightwave: clearing all particles');
+      particleSystemRef.current.clearAllParticles();
+    } else if (phase === 'proton') {
+      console.log('Switching to proton: clearing and restarting');
+      particleSystemRef.current.clearAllParticles();
+      particleSystemRef.current.createInitialProtons(50);
+      console.log('New protons created:', particleSystemRef.current.getParticleCount());
+    } else {
+      particleSystemRef.current.clearAllParticles();
+    }
   };
 
 
@@ -395,7 +147,7 @@ export default function DoubleSlitExperiment() {
 
       <TopBar />
 
-      <PhaseSelector />
+      <PhaseSelector activePhase={activePhase} onPhaseChange={handlePhaseChange} />
 
     </div>
   );
