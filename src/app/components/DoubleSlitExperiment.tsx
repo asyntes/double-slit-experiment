@@ -16,7 +16,7 @@ export default function DoubleSlitExperiment() {
   const particlesRef = useRef<THREE.Mesh[]>([]);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
-  const barrierRef = useRef<THREE.Group | null>(null);
+  const diffractionPanelRef = useRef<THREE.Group | null>(null);
 
 
   useEffect(() => {
@@ -116,8 +116,8 @@ export default function DoubleSlitExperiment() {
     scene.add(detectionScreen);
     detectionScreenRef.current = detectionScreen;
 
-    const barrierGroup = new THREE.Group();
-    const barrierMaterial = new THREE.MeshBasicMaterial({
+    const diffractionPanelGroup = new THREE.Group();
+    const diffractionPanelMaterial = new THREE.MeshBasicMaterial({
       color: 0x666666,
       transparent: true,
       opacity: 0.7,
@@ -125,37 +125,37 @@ export default function DoubleSlitExperiment() {
     });
 
     const topGeometry = new THREE.PlaneGeometry(20, 5.5);
-    const topBarrier = new THREE.Mesh(topGeometry, barrierMaterial);
-    topBarrier.position.set(0, 4.75, 15);
-    topBarrier.rotation.y = Math.PI;
-    barrierGroup.add(topBarrier);
+    const topDiffractionPanel = new THREE.Mesh(topGeometry, diffractionPanelMaterial);
+    topDiffractionPanel.position.set(0, 4.75, 15);
+    topDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(topDiffractionPanel);
 
     const bottomGeometry = new THREE.PlaneGeometry(20, 5.5);
-    const bottomBarrier = new THREE.Mesh(bottomGeometry, barrierMaterial);
-    bottomBarrier.position.set(0, -4.75, 15);
-    bottomBarrier.rotation.y = Math.PI;
-    barrierGroup.add(bottomBarrier);
+    const bottomDiffractionPanel = new THREE.Mesh(bottomGeometry, diffractionPanelMaterial);
+    bottomDiffractionPanel.position.set(0, -4.75, 15);
+    bottomDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(bottomDiffractionPanel);
 
     const leftGeometry = new THREE.PlaneGeometry(8.5, 4);
-    const leftBarrier = new THREE.Mesh(leftGeometry, barrierMaterial);
-    leftBarrier.position.set(-5.75, 0, 15);
-    leftBarrier.rotation.y = Math.PI;
-    barrierGroup.add(leftBarrier);
+    const leftDiffractionPanel = new THREE.Mesh(leftGeometry, diffractionPanelMaterial);
+    leftDiffractionPanel.position.set(-5.75, 0, 15);
+    leftDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(leftDiffractionPanel);
 
     const middleGeometry = new THREE.PlaneGeometry(1, 4);
-    const middleBarrier = new THREE.Mesh(middleGeometry, barrierMaterial);
-    middleBarrier.position.set(0, 0, 15);
-    middleBarrier.rotation.y = Math.PI;
-    barrierGroup.add(middleBarrier);
+    const middleDiffractionPanel = new THREE.Mesh(middleGeometry, diffractionPanelMaterial);
+    middleDiffractionPanel.position.set(0, 0, 15);
+    middleDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(middleDiffractionPanel);
 
     const rightGeometry = new THREE.PlaneGeometry(8.5, 4);
-    const rightBarrier = new THREE.Mesh(rightGeometry, barrierMaterial);
-    rightBarrier.position.set(5.75, 0, 15);
-    rightBarrier.rotation.y = Math.PI;
-    barrierGroup.add(rightBarrier);
+    const rightDiffractionPanel = new THREE.Mesh(rightGeometry, diffractionPanelMaterial);
+    rightDiffractionPanel.position.set(5.75, 0, 15);
+    rightDiffractionPanel.rotation.y = Math.PI;
+    diffractionPanelGroup.add(rightDiffractionPanel);
 
-    scene.add(barrierGroup);
-    barrierRef.current = barrierGroup;
+    scene.add(diffractionPanelGroup);
+    diffractionPanelRef.current = diffractionPanelGroup;
   };
 
 
