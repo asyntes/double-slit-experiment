@@ -317,6 +317,12 @@ export default function DoubleSlitExperiment() {
             Add an Observer
           </button>
         </div>
+        
+        <div className="phase-explanation mt-3 p-3 bg-black rounded-md border border-white/10">
+          <p className="text-white text-sm leading-relaxed">
+            Particles are fired towards two slits. Each particle travels through one slit or the other, creating random impact points on the detection screen.
+          </p>
+        </div>
       </div>
 
     </div>
