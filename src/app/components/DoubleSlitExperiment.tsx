@@ -302,8 +302,8 @@ export default function DoubleSlitExperiment() {
     <div className="relative w-full h-screen bg-black overflow-hidden" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
       <div ref={mountRef} className="w-full h-full" />
 
-      <div className="status-bar absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
-        <div className="status-controls flex">
+      <div className="phase-selector absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
+        <div className="phase-selector-controls">
           <button className="px-4 py-2 bg-white text-black rounded-md font-semibold text-sm transition-all duration-300 hover:bg-gray-200 uppercase">
             Particle
           </button>

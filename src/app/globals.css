@@ -42,19 +42,19 @@ body {
 }
 
 /* Default landscape layout - single row */
-.status-controls {
+.phase-selector-controls {
   display: flex;
   gap: 0.5rem;
 }
 
-.status-controls button {
+.phase-selector-controls button {
   flex: 1;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1rem !important;
 }
 
 /* Portrait layout - 2x2 grid */
 @media (orientation: portrait) {
-  .status-controls {
+  .phase-selector-controls {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
@@ -62,9 +62,9 @@ body {
     height: auto;
   }
 
-  .status-controls button {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.75rem;
+  .phase-selector-controls button {
+    padding: 0.75rem 0.5rem !important;
+    font-size: 0.75rem !important;
     width: auto;
     flex: none;
   }
