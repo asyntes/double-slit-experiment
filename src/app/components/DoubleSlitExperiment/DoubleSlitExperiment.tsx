@@ -73,7 +73,7 @@ export default function DoubleSlitExperiment() {
       leftTrapezoidRef.current.visible = showLightElements;
       rightTrapezoidRef.current.visible = showLightElements;
 
-      if (activePhase === 'lightwave') {
+      if (activePhase === 'lightwave' || activePhase === 'electron') {
         const stripeTexture = createStripeTexture();
         const stripeMaterial = new THREE.MeshBasicMaterial({
           map: stripeTexture,
@@ -134,6 +134,11 @@ export default function DoubleSlitExperiment() {
       particleSystemRef.current.clearAllParticles();
       particleSystemRef.current.createInitialProtons(50);
       console.log('New protons created:', particleSystemRef.current.getParticleCount());
+    } else if (phase === 'electron') {
+      console.log('Switching to electron: clearing and restarting');
+      particleSystemRef.current.clearAllParticles();
+      particleSystemRef.current.createInitialElectrons(50);
+      console.log('New electrons created:', particleSystemRef.current.getParticleCount());
     } else {
       particleSystemRef.current.clearAllParticles();
     }
