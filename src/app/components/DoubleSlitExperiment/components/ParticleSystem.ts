@@ -49,10 +49,46 @@ export class ParticleSystem {
     return proton as unknown as Particle;
   }
 
+  createSingleElectron() {
+    const geometry = new THREE.SphereGeometry(0.05, 8, 6);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x0000ff,
+      transparent: false
+    });
+
+    const electron = new THREE.Mesh(geometry, material);
+    electron.position.set(
+      (Math.random() - 0.5) * 1.0,
+      (Math.random() - 0.5) * 1.0,
+      0.5
+    );
+
+    electron.userData = {
+      velocity: {
+        x: (Math.random() - 0.5) * 0.4,
+        y: (Math.random() - 0.5) * 0.4,
+        z: 0.5 + Math.random() * 0.3
+      },
+      isMark: false,
+      markTime: 0
+    };
+
+    this.scene.add(electron);
+    this.particles.push(electron as unknown as Particle);
+    return electron as unknown as Particle;
+  }
+
   createInitialProtons(count: number = 50) {
     this.particles = [];
     for (let i = 0; i < count; i++) {
       this.createSingleProton();
+    }
+  }
+
+  createInitialElectrons(count: number = 50) {
+    this.particles = [];
+    for (let i = 0; i < count; i++) {
+      this.createSingleElectron();
     }
   }
 

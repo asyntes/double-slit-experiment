@@ -55,6 +55,7 @@ export default function DoubleSlitExperiment() {
     rightTrapezoidRef,
     labelsRef,
     particleSystemRef,
+    observerRef,
     sceneReady
   } = useThreeScene();
 
@@ -64,16 +65,18 @@ export default function DoubleSlitExperiment() {
     }
   }, [sceneReady]);
 
-  // Handle light cone, trapezoids visibility and generator label based on active phase
+  // Handle light cone, trapezoids, observer visibility and generator label based on active phase
   useEffect(() => {
-    if (lightConeRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && sceneRef.current && detectionScreenRef.current) {
+    if (lightConeRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current) {
       const showLightElements = activePhase === 'lightwave';
+      const showObserver = activePhase === 'observer';
 
       lightConeRef.current.visible = showLightElements;
       leftTrapezoidRef.current.visible = showLightElements;
       rightTrapezoidRef.current.visible = showLightElements;
+      observerRef.current.visible = showObserver;
 
-      if (activePhase === 'lightwave') {
+      if (activePhase === 'lightwave' || activePhase === 'electron') {
         const stripeTexture = createStripeTexture();
         const stripeMaterial = new THREE.MeshBasicMaterial({
           map: stripeTexture,
@@ -93,7 +96,7 @@ export default function DoubleSlitExperiment() {
       const labelText = activePhase === 'lightwave' ? 'Light Generator' : 'Particle Generator';
       updateGeneratorLabel(sceneRef.current, labelText);
 
-      console.log('Light elements visibility:', showLightElements, 'Generator label:', labelText, 'for phase:', activePhase);
+      console.log('Light elements visibility:', showLightElements, 'Observer visibility:', showObserver, 'Generator label:', labelText, 'for phase:', activePhase);
     }
   }, [activePhase, sceneReady]);
 
@@ -134,6 +137,16 @@ export default function DoubleSlitExperiment() {
       particleSystemRef.current.clearAllParticles();
       particleSystemRef.current.createInitialProtons(50);
       console.log('New protons created:', particleSystemRef.current.getParticleCount());
+    } else if (phase === 'electron') {
+      console.log('Switching to electron: clearing and restarting');
+      particleSystemRef.current.clearAllParticles();
+      particleSystemRef.current.createInitialElectrons(50);
+      console.log('New electrons created:', particleSystemRef.current.getParticleCount());
+    } else if (phase === 'observer') {
+      console.log('Switching to observer: clearing and restarting with electrons');
+      particleSystemRef.current.clearAllParticles();
+      particleSystemRef.current.createInitialElectrons(50);
+      console.log('New electrons created for observer phase:', particleSystemRef.current.getParticleCount());
     } else {
       particleSystemRef.current.clearAllParticles();
     }
