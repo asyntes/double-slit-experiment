@@ -18,11 +18,11 @@ export const useResponsiveLayout = ({ scene, camera, renderer, controls }: Respo
     if (isPortrait) {
       const isLowHeightDevice = window.innerHeight <= 667;
       const sceneOffset = isLowHeightDevice ? 12 : 5;
-      
+
       scene.position.y += sceneOffset;
-      
+
       const direction = camera.position.clone().sub(controls.target).normalize();
-      camera.position.copy(controls.target).add(direction.multiplyScalar(60));
+      camera.position.copy(controls.target).add(direction.multiplyScalar(55));
       controls.update();
     }
 
@@ -41,11 +41,11 @@ export const useResponsiveLayout = ({ scene, camera, renderer, controls }: Respo
       if (isPortrait) {
         const isLowHeightDevice = window.innerHeight <= 667;
         const sceneOffset = isLowHeightDevice ? 12 : 5;
-        
+
         scene.position.y += sceneOffset;
-        
+
         const direction = camera.position.clone().sub(controls.target).normalize();
-        camera.position.copy(controls.target).add(direction.multiplyScalar(60));
+        camera.position.copy(controls.target).add(direction.multiplyScalar(55));
         controls.update();
       }
     };
