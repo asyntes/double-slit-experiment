@@ -71,7 +71,7 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   const coneHeight = 15; // Distance from generator (z=0) to diffraction panel (z=15)
   const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 16, 1, true);
   const coneMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff0000,
+    color: 0x00ff00,
     transparent: true,
     opacity: 0.3,
     side: THREE.DoubleSide
@@ -134,7 +134,7 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
 
   // Diffraction trapezoids for light wave phase
   const trapezoidMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff0000,
+    color: 0x00ff00,
     transparent: true,
     opacity: 0.3,
     side: THREE.DoubleSide
