@@ -5,6 +5,46 @@ import { createExperimentSetup } from '../components/ExperimentSetup';
 import { createSceneLabels } from '../components/SceneLabels';
 import { ParticleSystem } from '../components/ParticleSystem';
 
+// Create observer object with text
+const createObserver = (scene: THREE.Scene): THREE.Group => {
+  const observerGroup = new THREE.Group();
+
+  // Create sphere
+  const sphereGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+  const sphereMaterial = new THREE.MeshPhongMaterial({
+    color: 0xaaaaaa,
+    emissive: 0x333333
+  });
+  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  observerGroup.add(sphere);
+
+  // Create text sprite for observer
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 128;
+  const context = canvas.getContext('2d')!;
+
+  context.fillStyle = '#ffffff';
+  context.font = 'bold 36px Arial';
+  context.textAlign = 'center';
+  context.fillText('Observer', canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+  const sprite = new THREE.Sprite(spriteMaterial);
+  sprite.scale.set(6, 1.5, 1);
+  sprite.position.set(0, 1.2, 0); // Position above the sphere
+
+  observerGroup.add(sprite);
+
+  // Position the observer before the diffraction slits (z=15), on the left
+  observerGroup.position.set(3, 0, 14);
+  observerGroup.visible = true; // Make visible
+
+  scene.add(observerGroup);
+  return observerGroup;
+};
+
 export const useThreeScene = () => {
   const [sceneReady, setSceneReady] = useState(false);
   const mountRef = useRef<HTMLDivElement>(null);
@@ -19,6 +59,7 @@ export const useThreeScene = () => {
   const rightTrapezoidRef = useRef<THREE.Mesh | null>(null);
   const labelsRef = useRef<THREE.Group[]>([]);
   const particleSystemRef = useRef<ParticleSystem | null>(null);
+  const observerRef = useRef<THREE.Group | null>(null);
   const defaultScreenMaterialRef = useRef<THREE.Material | null>(null);
   const stripeScreenMaterialRef = useRef<THREE.Material | null>(null);
 
@@ -83,6 +124,10 @@ export const useThreeScene = () => {
     const particleSystem = new ParticleSystem(scene);
     particleSystemRef.current = particleSystem;
 
+    // Create observer object
+    const observer = createObserver(scene);
+    observerRef.current = observer;
+
     // Create initial protons for proton phase
     particleSystem.createInitialProtons(50);
 
@@ -112,6 +157,7 @@ export const useThreeScene = () => {
     rightTrapezoidRef,
     labelsRef,
     particleSystemRef,
+    observerRef,
     sceneReady
   };
 };

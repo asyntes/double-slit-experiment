@@ -57,13 +57,13 @@ export const useExperimentAnimation = ({
       // Update experiment physics  
       const currentPhase = activePhase; // Use prop directly instead of ref
 
-      // Create new particles only in proton/electron phases and if particle system exists
-      if ((currentPhase === 'proton' || currentPhase === 'electron') && particleSystem && particleSystem.getParticleCount() < 120) {
+      // Create new particles only in proton/electron/observer phases and if particle system exists
+      if ((currentPhase === 'proton' || currentPhase === 'electron' || currentPhase === 'observer') && particleSystem && particleSystem.getParticleCount() < 120) {
         const particlesToAdd = Math.min(5, 120 - particleSystem.getParticleCount());
         for (let i = 0; i < particlesToAdd; i++) {
           if (currentPhase === 'proton') {
             particleSystem.createSingleProton();
-          } else if (currentPhase === 'electron') {
+          } else if (currentPhase === 'electron' || currentPhase === 'observer') {
             particleSystem.createSingleElectron();
           }
         }

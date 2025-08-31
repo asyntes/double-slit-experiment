@@ -35,7 +35,7 @@ export default function PhaseSelector({ activePhase, onPhaseChange }: PhaseSelec
         <PhaseButton label="Proton" active={activePhase === 'proton'} onClick={() => onPhaseChange('proton')} />
         <PhaseButton label="Light Wave" active={activePhase === 'lightwave'} onClick={() => onPhaseChange('lightwave')} />
         <PhaseButton label="Electron" active={activePhase === 'electron'} onClick={() => onPhaseChange('electron')} />
-        <PhaseButton label="Add an Observer" active={false} disabled={true} />
+        <PhaseButton label="Add an Observer" active={activePhase === 'observer'} onClick={() => onPhaseChange('observer')} />
       </div>
 
       <div className="phase-explanation mt-3 p-3 bg-black/60 rounded-md border border-white/10">
@@ -46,7 +46,9 @@ export default function PhaseSelector({ activePhase, onPhaseChange }: PhaseSelec
               ? 'Light waves demonstrate the wave nature of light, showing interference patterns when passing through double slits.'
               : activePhase === 'electron'
                 ? 'Electrons pass through both slits, as evidenced by the interference pattern on the screen, demonstrating wave-particle duality.'
-                : 'Select a phase to see the experiment description.'
+                : activePhase === 'observer'
+                  ? 'Electrons are detected by the observer, causing the wave function to collapse. The interference pattern disappears, showing particle-like behavior with random impact points on the screen.'
+                  : 'Select a phase to see the experiment description.'
           }
         </p>
       </div>
