@@ -29,16 +29,16 @@ export class ParticleSystem {
 
     const proton = new THREE.Mesh(geometry, material);
     proton.position.set(
-      (Math.random() - 0.5) * 1.0,
-      (Math.random() - 0.5) * 1.0,
+      (Math.random() - 0.5) * 4.5,
+      (Math.random() - 0.5) * 4.0,
       0.5
     );
 
     proton.userData = {
       velocity: {
-        x: (Math.random() - 0.5) * 0.4,
-        y: (Math.random() - 0.5) * 0.4,
-        z: 0.5 + Math.random() * 0.3
+        x: (Math.random() - 0.5) * 0.1,
+        y: (Math.random() - 0.5) * 0.1,
+        z: 0.5 + Math.random() * 0.1
       },
       isMark: false,
       markTime: 0
@@ -58,16 +58,16 @@ export class ParticleSystem {
 
     const electron = new THREE.Mesh(geometry, material);
     electron.position.set(
-      (Math.random() - 0.5) * 1.0,
-      (Math.random() - 0.5) * 1.0,
+      (Math.random() - 0.5) * 4.5,
+      (Math.random() - 0.5) * 4.0,
       0.5
     );
 
     electron.userData = {
       velocity: {
-        x: (Math.random() - 0.5) * 0.4,
-        y: (Math.random() - 0.5) * 0.4,
-        z: 0.5 + Math.random() * 0.3
+        x: (Math.random() - 0.5) * 0.1,
+        y: (Math.random() - 0.5) * 0.1,
+        z: 0.5 + Math.random() * 0.1
       },
       isMark: false,
       markTime: 0

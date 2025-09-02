@@ -54,7 +54,7 @@ export const useThreeScene = () => {
   const controlsRef = useRef<OrbitControls | null>(null);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const diffractionPanelRef = useRef<THREE.Group | null>(null);
-  const lightConeRef = useRef<THREE.Mesh | null>(null);
+  const lightBeamRef = useRef<THREE.Mesh | null>(null);
   const leftTrapezoidRef = useRef<THREE.Mesh | null>(null);
   const rightTrapezoidRef = useRef<THREE.Mesh | null>(null);
   const labelsRef = useRef<THREE.Group[]>([]);
@@ -109,10 +109,10 @@ export const useThreeScene = () => {
     console.log('Three.js setup complete - Camera:', camera.position, 'Target:', controls.target);
 
     // Create experiment setup
-    const { detectionScreen, diffractionPanelGroup, lightCone, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);
+    const { detectionScreen, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);
     detectionScreenRef.current = detectionScreen;
     diffractionPanelRef.current = diffractionPanelGroup;
-    lightConeRef.current = lightCone;
+    lightBeamRef.current = lightBeam;
     leftTrapezoidRef.current = leftTrapezoid;
     rightTrapezoidRef.current = rightTrapezoid;
 
@@ -152,7 +152,7 @@ export const useThreeScene = () => {
     controlsRef,
     detectionScreenRef,
     diffractionPanelRef,
-    lightConeRef,
+    lightBeamRef,
     leftTrapezoidRef,
     rightTrapezoidRef,
     labelsRef,
