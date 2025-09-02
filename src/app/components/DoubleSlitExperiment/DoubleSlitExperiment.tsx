@@ -15,27 +15,44 @@ import { updateGeneratorLabel } from './components/SceneLabels';
 export default function DoubleSlitExperiment() {
   const [activePhase, setActivePhase] = useState('proton');
 
-  const createStripeTexture = (): THREE.CanvasTexture => {
+  const createParticleInterferenceTexture = (): THREE.CanvasTexture => {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 384;
     const ctx = canvas.getContext('2d')!;
 
+    // Dark background
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const totalWidth = canvas.width;
-    const stripeRegionWidth = totalWidth * 0.5;
-    const stripeRegionStart = (totalWidth - stripeRegionWidth) / 2;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const stripeRegionWidth = canvas.width * 0.5;
     const stripeHeight = canvas.height * (4 / 15);
-    const stripeRegionTop = (canvas.height - stripeHeight) / 2;
 
-    const stripeWidth = stripeRegionWidth / 20;
+    // Generate particle-based interference pattern
     ctx.fillStyle = '#ffffff';
-
-    for (let i = 0; i < 20; i += 2) {
-      const x = stripeRegionStart + (i * stripeWidth);
-      ctx.fillRect(x, stripeRegionTop, stripeWidth, stripeHeight);
+    
+    // Create interference pattern using particle distribution
+    for (let i = 0; i < 8000; i++) {
+      // Interference pattern simulation - higher density in bright fringes
+      const x = Math.random() * stripeRegionWidth - stripeRegionWidth / 2;
+      const y = (Math.random() - 0.5) * stripeHeight;
+      
+      // Calculate interference intensity based on position
+      const fringe = Math.cos(x * 0.08) * Math.cos(x * 0.08); // Simulated double-slit interference
+      const intensity = Math.random();
+      
+      // Only place particle if random value is less than interference intensity
+      if (intensity < fringe * 0.8) {
+        const particleX = centerX + x + (Math.random() - 0.5) * 2;
+        const particleY = centerY + y + (Math.random() - 0.5) * 2;
+        
+        // Draw small particle dot
+        ctx.beginPath();
+        ctx.arc(particleX, particleY, 0.5 + Math.random() * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     const texture = new THREE.CanvasTexture(canvas);
@@ -78,13 +95,13 @@ export default function DoubleSlitExperiment() {
       observerRef.current.visible = showObserver;
 
       if (activePhase === 'lightwave' || activePhase === 'electron') {
-        const stripeTexture = createStripeTexture();
-        const stripeMaterial = new THREE.MeshBasicMaterial({
-          map: stripeTexture,
+        const interferenceTexture = createParticleInterferenceTexture();
+        const interferenceMaterial = new THREE.MeshBasicMaterial({
+          map: interferenceTexture,
           color: 0x727272,
           side: THREE.DoubleSide
         });
-        detectionScreenRef.current.material = stripeMaterial;
+        detectionScreenRef.current.material = interferenceMaterial;
       } else {
         const defaultMaterial = new THREE.MeshBasicMaterial({
           color: 0x333333,
