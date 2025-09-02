@@ -45,7 +45,7 @@ export const createSceneLabels = (scene: THREE.Scene): THREE.Group[] => {
 
   // Generator Label (will change based on phase)
   const generatorLabel = createTextLabel('Particle Generator');
-  generatorLabel.position.set(0, 1.5, 0);
+  generatorLabel.position.set(0, 4.5, 0); // Position above the enlarged generator cylinder
   generatorLabel.scale.setScalar(1);
   generatorLabel.name = 'generatorLabel'; // Add name for identification
   scene.add(generatorLabel);
@@ -78,7 +78,7 @@ export const updateGeneratorLabel = (scene: THREE.Scene, newText: string) => {
       oldSprite.material.dispose();
     }
     generatorLabel.remove(oldSprite);
-    
+
     // Create new label with updated text
     const newLabelGroup = createTextLabel(newText);
     const newSprite = newLabelGroup.children[0];

@@ -51,7 +51,7 @@ export default function DoubleSlitExperiment() {
     controlsRef,
     detectionScreenRef,
     diffractionPanelRef,
-    lightConeRef,
+    lightBeamRef,
     leftTrapezoidRef,
     rightTrapezoidRef,
     labelsRef,
@@ -68,11 +68,11 @@ export default function DoubleSlitExperiment() {
 
   // Handle light cone, trapezoids, observer visibility and generator label based on active phase
   useEffect(() => {
-    if (lightConeRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current) {
+    if (lightBeamRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current) {
       const showLightElements = activePhase === 'lightwave';
       const showObserver = activePhase === 'observer';
 
-      lightConeRef.current.visible = showLightElements;
+      lightBeamRef.current.visible = showLightElements;
       leftTrapezoidRef.current.visible = showLightElements;
       rightTrapezoidRef.current.visible = showLightElements;
       observerRef.current.visible = showObserver;

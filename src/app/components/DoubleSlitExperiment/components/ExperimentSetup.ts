@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 
 export const createExperimentSetup = (scene: THREE.Scene) => {
-  // Particle generator (cylinder)
-  const cylinderGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16);
+  // Particle generator (cylinder) - extended length for realistic appearance
+  const cylinderGeometry = new THREE.CylinderGeometry(3.5, 3.5, 12, 32);
   const cylinderMaterial = new THREE.MeshPhongMaterial({
     color: 0xffffff,
     emissive: 0x222222
   });
   const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-  cylinder.position.set(0, 0, 0);
+  cylinder.position.set(0, 0, -5); // Move back so front face is at z=1 and extends to z=-11
   cylinder.rotation.x = Math.PI / 2; // Rotate 90 degrees to point towards the slits
   scene.add(cylinder);
 
@@ -67,23 +67,23 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
 
   scene.add(diffractionPanelGroup);
 
-  // Light cone for wave visualization (initially hidden)
-  const coneRadius = 4; // Base radius at diffraction panel
-  const coneHeight = 15; // Distance from generator (z=0) to diffraction panel (z=15)
-  const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 16, 1, true);
-  const coneMaterial = new THREE.MeshBasicMaterial({
+  // Light beam for wave visualization (initially hidden) - collimated cylinder
+  const beamRadius = 2.5; // Same radius as generator for collimated beam
+  const beamLength = 15; // Distance from generator (z=0) to diffraction panel (z=15)
+  const beamGeometry = new THREE.CylinderGeometry(beamRadius, beamRadius, beamLength, 32, 1, true);
+  const beamMaterial = new THREE.MeshBasicMaterial({
     color: 0x00ff00,
     transparent: true,
     opacity: 0.3,
     side: THREE.DoubleSide
   });
-  const lightCone = new THREE.Mesh(coneGeometry, coneMaterial);
+  const lightBeam = new THREE.Mesh(beamGeometry, beamMaterial);
 
-  // Position the cone so the tip is at the generator (z=0) and base is at diffraction panel (z=15)
-  lightCone.position.set(0, 0, coneHeight / 2);
-  lightCone.rotation.x = -Math.PI / 2; // Rotate to point towards positive Z (towards slits)
-  lightCone.visible = false; // Initially hidden
-  scene.add(lightCone);
+  // Position the beam so it extends from generator (z=0) to diffraction panel (z=15)
+  lightBeam.position.set(0, 0, beamLength / 2);
+  lightBeam.rotation.x = Math.PI / 2; // Rotate to align with Z-axis (towards slits)
+  lightBeam.visible = false; // Initially hidden
+  scene.add(lightBeam);
 
   // Create trapezoid shape for diffraction pattern
   const createTrapezoidGeometry = (
@@ -155,5 +155,5 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   rightTrapezoid.visible = false;
   scene.add(rightTrapezoid);
 
-  return { detectionScreen, diffractionPanelGroup, lightCone, leftTrapezoid, rightTrapezoid };
+  return { detectionScreen, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid };
 };
