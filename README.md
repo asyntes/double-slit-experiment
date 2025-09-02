@@ -106,12 +106,6 @@ This simulator is perfect for:
 - **Research Demonstrations**: Present quantum mechanics principles
 - **STEM Outreach**: Engage students with interactive physics
 
-## Known Issues
-
-- Mobile performance may vary on older devices
-- Some advanced quantum effects are simplified for visualization
-- Camera controls may need adjustment on touch devices
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
