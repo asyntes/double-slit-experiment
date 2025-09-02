@@ -1,15 +1,16 @@
 import * as THREE from 'three';
 
 export const createExperimentSetup = (scene: THREE.Scene) => {
-  // Light generator (cube)
-  const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-  const cubeMaterial = new THREE.MeshPhongMaterial({
+  // Particle generator (cylinder)
+  const cylinderGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16);
+  const cylinderMaterial = new THREE.MeshPhongMaterial({
     color: 0xffffff,
     emissive: 0x222222
   });
-  const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-  cube.position.set(0, 0, 0);
-  scene.add(cube);
+  const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+  cylinder.position.set(0, 0, 0);
+  cylinder.rotation.x = Math.PI / 2; // Rotate 90 degrees to point towards the slits
+  scene.add(cylinder);
 
   // Detection screen
   const screenGeometry = new THREE.PlaneGeometry(20, 15);

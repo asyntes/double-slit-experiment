@@ -94,7 +94,19 @@ export default function DoubleSlitExperiment() {
       }
 
       // Update generator label based on phase
-      const labelText = activePhase === 'lightwave' ? 'Light Generator' : 'Particle Generator';
+      let labelText = 'Particle Generator';
+      switch (activePhase) {
+        case 'proton':
+          labelText = 'Proton Accelerator';
+          break;
+        case 'lightwave':
+          labelText = 'Laser';
+          break;
+        case 'electron':
+        case 'observer':
+          labelText = 'Electron Gun';
+          break;
+      }
       updateGeneratorLabel(sceneRef.current, labelText);
 
       console.log('Light elements visibility:', showLightElements, 'Observer visibility:', showObserver, 'Generator label:', labelText, 'for phase:', activePhase);
