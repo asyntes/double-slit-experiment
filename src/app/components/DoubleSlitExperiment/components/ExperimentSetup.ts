@@ -12,16 +12,29 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   cylinder.rotation.x = Math.PI / 2; // Rotate 90 degrees to point towards the slits
   scene.add(cylinder);
 
-  // Detection screen
+  // Detection screen - base layer (always visible)
   const screenGeometry = new THREE.PlaneGeometry(20, 15);
-  const screenMaterial = new THREE.MeshBasicMaterial({
+  const baseMaterial = new THREE.MeshBasicMaterial({
     color: 0x333333,
     side: THREE.DoubleSide
   });
-  const detectionScreen = new THREE.Mesh(screenGeometry, screenMaterial);
-  detectionScreen.position.set(0, 0, 30);
+  const detectionScreen = new THREE.Mesh(screenGeometry, baseMaterial);
+  detectionScreen.position.set(0, 0, 30.1); // Base screen behind
   detectionScreen.rotation.x = 0;
   scene.add(detectionScreen);
+
+  // Detection screen overlay - interference pattern layer (initially invisible)
+  const overlayGeometry = new THREE.PlaneGeometry(20, 15);
+  const overlayMaterial = new THREE.MeshBasicMaterial({
+    color: 0x333333,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0
+  });
+  const detectionScreenOverlay = new THREE.Mesh(overlayGeometry, overlayMaterial);
+  detectionScreenOverlay.position.set(0, 0, 30); // Overlay screen in front
+  detectionScreenOverlay.rotation.x = 0;
+  scene.add(detectionScreenOverlay);
 
   // Diffraction panel with slits
   const diffractionPanelGroup = new THREE.Group();
@@ -155,5 +168,5 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   rightTrapezoid.visible = false;
   scene.add(rightTrapezoid);
 
-  return { detectionScreen, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid };
+  return { detectionScreen, detectionScreenOverlay, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid };
 };

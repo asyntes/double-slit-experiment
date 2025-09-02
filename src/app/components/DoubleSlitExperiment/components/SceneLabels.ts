@@ -46,7 +46,7 @@ export const createSceneLabels = (scene: THREE.Scene): THREE.Group[] => {
   // Generator Label (will change based on phase)
   const generatorLabel = createTextLabel('Particle Generator');
   generatorLabel.position.set(0, 4.5, 0); // Position above the enlarged generator cylinder
-  generatorLabel.scale.setScalar(1);
+  generatorLabel.scale.setScalar(2);
   generatorLabel.name = 'generatorLabel'; // Add name for identification
   scene.add(generatorLabel);
   labels.push(generatorLabel);
@@ -54,14 +54,14 @@ export const createSceneLabels = (scene: THREE.Scene): THREE.Group[] => {
   // Diffraction Slit Label
   const diffractionSlitLabel = createTextLabel('Diffraction Slits');
   diffractionSlitLabel.position.set(0, 8.5, 15);
-  diffractionSlitLabel.scale.setScalar(1);
+  diffractionSlitLabel.scale.setScalar(2);
   scene.add(diffractionSlitLabel);
   labels.push(diffractionSlitLabel);
 
   // Detection Screen Label
   const detectionScreenLabel = createTextLabel('Detection Screen');
   detectionScreenLabel.position.set(0, 8.5, 30);
-  detectionScreenLabel.scale.setScalar(1);
+  detectionScreenLabel.scale.setScalar(2);
   scene.add(detectionScreenLabel);
   labels.push(detectionScreenLabel);
 

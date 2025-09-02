@@ -53,6 +53,7 @@ export const useThreeScene = () => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
+  const detectionScreenOverlayRef = useRef<THREE.Mesh | null>(null);
   const diffractionPanelRef = useRef<THREE.Group | null>(null);
   const lightBeamRef = useRef<THREE.Mesh | null>(null);
   const leftTrapezoidRef = useRef<THREE.Mesh | null>(null);
@@ -109,8 +110,9 @@ export const useThreeScene = () => {
     console.log('Three.js setup complete - Camera:', camera.position, 'Target:', controls.target);
 
     // Create experiment setup
-    const { detectionScreen, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);
+    const { detectionScreen, detectionScreenOverlay, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);
     detectionScreenRef.current = detectionScreen;
+    detectionScreenOverlayRef.current = detectionScreenOverlay;
     diffractionPanelRef.current = diffractionPanelGroup;
     lightBeamRef.current = lightBeam;
     leftTrapezoidRef.current = leftTrapezoid;
@@ -151,6 +153,7 @@ export const useThreeScene = () => {
     cameraRef,
     controlsRef,
     detectionScreenRef,
+    detectionScreenOverlayRef,
     diffractionPanelRef,
     lightBeamRef,
     leftTrapezoidRef,
