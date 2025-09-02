@@ -43,22 +43,19 @@ const createTextLabel = (text: string): THREE.Group => {
 export const createSceneLabels = (scene: THREE.Scene): THREE.Group[] => {
   const labels: THREE.Group[] = [];
 
-  // Generator Label (will change based on phase)
   const generatorLabel = createTextLabel('Particle Generator');
-  generatorLabel.position.set(0, 4.5, 0); // Position above the enlarged generator cylinder
+  generatorLabel.position.set(0, 4.5, 0);
   generatorLabel.scale.setScalar(2);
-  generatorLabel.name = 'generatorLabel'; // Add name for identification
+  generatorLabel.name = 'generatorLabel';
   scene.add(generatorLabel);
   labels.push(generatorLabel);
 
-  // Diffraction Slit Label
   const diffractionSlitLabel = createTextLabel('Diffraction Slits');
   diffractionSlitLabel.position.set(0, 8.5, 15);
   diffractionSlitLabel.scale.setScalar(2);
   scene.add(diffractionSlitLabel);
   labels.push(diffractionSlitLabel);
 
-  // Detection Screen Label
   const detectionScreenLabel = createTextLabel('Detection Screen');
   detectionScreenLabel.position.set(0, 8.5, 30);
   detectionScreenLabel.scale.setScalar(2);
@@ -71,7 +68,6 @@ export const createSceneLabels = (scene: THREE.Scene): THREE.Group[] => {
 export const updateGeneratorLabel = (scene: THREE.Scene, newText: string) => {
   const generatorLabel = scene.getObjectByName('generatorLabel') as THREE.Group;
   if (generatorLabel) {
-    // Remove old sprite
     const oldSprite = generatorLabel.children[0];
     if (oldSprite instanceof THREE.Sprite && oldSprite.material.map) {
       oldSprite.material.map.dispose();
@@ -79,7 +75,6 @@ export const updateGeneratorLabel = (scene: THREE.Scene, newText: string) => {
     }
     generatorLabel.remove(oldSprite);
 
-    // Create new label with updated text
     const newLabelGroup = createTextLabel(newText);
     const newSprite = newLabelGroup.children[0];
     generatorLabel.add(newSprite);

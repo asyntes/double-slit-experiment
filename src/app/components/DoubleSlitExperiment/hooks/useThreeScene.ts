@@ -5,11 +5,9 @@ import { createExperimentSetup } from '../components/ExperimentSetup';
 import { createSceneLabels } from '../components/SceneLabels';
 import { ParticleSystem } from '../components/ParticleSystem';
 
-// Create observer object with text
 const createObserver = (scene: THREE.Scene): THREE.Group => {
   const observerGroup = new THREE.Group();
 
-  // Create sphere
   const sphereGeometry = new THREE.SphereGeometry(0.8, 16, 16);
   const sphereMaterial = new THREE.MeshPhongMaterial({
     color: 0xaaaaaa,
@@ -18,7 +16,6 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
   const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
   observerGroup.add(sphere);
 
-  // Create text sprite for observer
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 128;
@@ -33,13 +30,12 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
   const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
   const sprite = new THREE.Sprite(spriteMaterial);
   sprite.scale.set(6, 1.5, 1);
-  sprite.position.set(0, 1.2, 0); // Position above the sphere
+  sprite.position.set(0, 1.2, 0);
 
   observerGroup.add(sprite);
 
-  // Position the observer before the diffraction slits (z=15), on the left
   observerGroup.position.set(3, 0, 14);
-  observerGroup.visible = true; // Make visible
+  observerGroup.visible = true;
 
   scene.add(observerGroup);
   return observerGroup;
@@ -67,25 +63,21 @@ export const useThreeScene = () => {
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a1a);
     sceneRef.current = scene;
     console.log('Three.js scene created:', scene);
 
-    // Camera setup
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(-19.165995152477358, 9.637643699188821, 5.055107657476825);
     cameraRef.current = camera;
 
-    // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Lighting setup
     const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
 
@@ -97,7 +89,6 @@ export const useThreeScene = () => {
     pointLight.position.set(0, 0, 5);
     scene.add(pointLight);
 
-    // Controls setup
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(1.6695085561159786, -3.0874538457220844, 16.502079563322997);
     controls.enablePan = true;
@@ -109,7 +100,6 @@ export const useThreeScene = () => {
 
     console.log('Three.js setup complete - Camera:', camera.position, 'Target:', controls.target);
 
-    // Create experiment setup
     const { detectionScreen, detectionScreenOverlay, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);
     detectionScreenRef.current = detectionScreen;
     detectionScreenOverlayRef.current = detectionScreenOverlay;
@@ -118,19 +108,15 @@ export const useThreeScene = () => {
     leftTrapezoidRef.current = leftTrapezoid;
     rightTrapezoidRef.current = rightTrapezoid;
 
-    // Create labels
     const labels = createSceneLabels(scene);
     labelsRef.current = labels;
 
-    // Create particle system
     const particleSystem = new ParticleSystem(scene);
     particleSystemRef.current = particleSystem;
 
-    // Create observer object
     const observer = createObserver(scene);
     observerRef.current = observer;
 
-    // Create initial protons for proton phase
     particleSystem.createInitialProtons(50);
 
     console.log('Experiment setup complete, scene objects:', scene.children.length);

@@ -20,7 +20,6 @@ export default function DoubleSlitExperiment() {
   const animateElectronPattern = () => {
     if (!detectionScreenOverlayRef.current || !detectionScreenRef.current) return;
 
-    // Generate static interference texture once
     const interferenceTexture = createParticleInterferenceTexture();
     const interferenceMaterial = new THREE.MeshBasicMaterial({
       map: interferenceTexture,
@@ -31,7 +30,6 @@ export default function DoubleSlitExperiment() {
     });
     detectionScreenOverlayRef.current.material = interferenceMaterial;
 
-    // Set base screen with multiply blending to avoid transparency artifacts
     const baseMaterial = new THREE.MeshBasicMaterial({
       color: 0x333333,
       side: THREE.DoubleSide
@@ -45,10 +43,8 @@ export default function DoubleSlitExperiment() {
       const duration = 60000;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Smooth easing function
       const easedProgress = 1 - Math.pow(1 - progress, 3);
 
-      // Only animate overlay opacity - no flickering
       if (detectionScreenOverlayRef.current.material instanceof THREE.MeshBasicMaterial) {
         detectionScreenOverlayRef.current.material.opacity = easedProgress;
         detectionScreenOverlayRef.current.material.needsUpdate = true;
@@ -59,7 +55,6 @@ export default function DoubleSlitExperiment() {
       }
     };
 
-    // Cancel any existing animation
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -73,7 +68,6 @@ export default function DoubleSlitExperiment() {
     canvas.height = 384;
     const ctx = canvas.getContext('2d')!;
 
-    // Dark background
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -82,32 +76,24 @@ export default function DoubleSlitExperiment() {
     const stripeRegionWidth = canvas.width * 0.5;
     const stripeHeight = canvas.height * (4 / 15);
 
-    // Generate particle-based interference pattern
     ctx.fillStyle = '#ffffff';
 
-    // Create interference pattern using particle distribution
     for (let i = 0; i < 8000; i++) {
-      // Interference pattern simulation - higher density in bright fringes
       const x = Math.random() * stripeRegionWidth - stripeRegionWidth / 2;
       const y = (Math.random() - 0.5) * stripeHeight;
 
-      // Calculate interference intensity based on position
-      const fringe = Math.cos(x * 0.08) * Math.cos(x * 0.08); // Simulated double-slit interference
+      const fringe = Math.cos(x * 0.08) * Math.cos(x * 0.08);
 
-      // Add envelope function for progressive fading towards edges
-      const normalizedX = Math.abs(x) / (stripeRegionWidth / 2); // 0 at center, 1 at edges
-      const envelope = Math.exp(-normalizedX * normalizedX * 3); // Gaussian envelope
+      const normalizedX = Math.abs(x) / (stripeRegionWidth / 2);
+      const envelope = Math.exp(-normalizedX * normalizedX * 3);
 
-      // Combine fringe pattern with envelope
       const totalIntensity = fringe * envelope;
       const intensity = Math.random();
 
-      // Only place particle if random value is less than total intensity
       if (intensity < totalIntensity * 1.0) {
         const particleX = centerX + x + (Math.random() - 0.5) * 2;
         const particleY = centerY + y + (Math.random() - 0.5) * 2;
 
-        // Draw small particle dot
         ctx.beginPath();
         ctx.arc(particleX, particleY, 0.5 + Math.random() * 0.5, 0, Math.PI * 2);
         ctx.fill();
@@ -143,7 +129,6 @@ export default function DoubleSlitExperiment() {
     }
   }, [sceneReady]);
 
-  // Handle light cone, trapezoids, observer visibility and generator label based on active phase
   useEffect(() => {
     if (lightBeamRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current && detectionScreenOverlayRef.current) {
       const showLightElements = activePhase === 'lightwave';
@@ -154,14 +139,12 @@ export default function DoubleSlitExperiment() {
       rightTrapezoidRef.current.visible = showLightElements;
       observerRef.current.visible = showObserver;
 
-      // Reset base screen to default (always solid for non-electron phases)
       const defaultMaterial = new THREE.MeshBasicMaterial({
         color: 0x333333,
         side: THREE.DoubleSide
       });
       detectionScreenRef.current.material = defaultMaterial;
 
-      // Reset overlay to transparent
       const transparentMaterial = new THREE.MeshBasicMaterial({
         color: 0x333333,
         side: THREE.DoubleSide,
@@ -171,7 +154,6 @@ export default function DoubleSlitExperiment() {
       detectionScreenOverlayRef.current.material = transparentMaterial;
 
       if (activePhase === 'lightwave') {
-        // Instant pattern for light on base screen
         const interferenceTexture = createParticleInterferenceTexture();
         const interferenceMaterial = new THREE.MeshBasicMaterial({
           map: interferenceTexture,
@@ -180,13 +162,10 @@ export default function DoubleSlitExperiment() {
         });
         detectionScreenRef.current.material = interferenceMaterial;
       } else if (activePhase === 'electron') {
-        // Gradual pattern buildup for electrons only (not observer)
         phaseStartTime.current = Date.now();
         animateElectronPattern();
       }
-      // Observer and proton phases keep the default gray screen
 
-      // Update generator label based on phase
       let labelText = 'Particle Generator';
       switch (activePhase) {
         case 'proton':
