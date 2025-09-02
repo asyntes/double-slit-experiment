@@ -17,7 +17,7 @@ export const useResponsiveLayout = ({ scene, camera, renderer, controls }: Respo
     const isPortrait = window.innerHeight > window.innerWidth;
     if (isPortrait) {
       const isLowHeightDevice = window.innerHeight <= 667;
-      const sceneOffset = isLowHeightDevice ? 12 : 5;
+      const sceneOffset = isLowHeightDevice ? 8 : 3;
 
       scene.position.y += sceneOffset;
 
@@ -40,7 +40,7 @@ export const useResponsiveLayout = ({ scene, camera, renderer, controls }: Respo
       const isPortrait = window.innerHeight > window.innerWidth;
       if (isPortrait) {
         const isLowHeightDevice = window.innerHeight <= 667;
-        const sceneOffset = isLowHeightDevice ? 10 : 5;
+        const sceneOffset = isLowHeightDevice ? 8 : 3;
 
         scene.position.y += sceneOffset;
 

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import './DoubleSlitExperiment.css';
 import PhaseSelector from './components/PhaseSelector/PhaseSelector';
 import TopBar from './components/TopBar/TopBar';
+import OrientationWarning from './components/OrientationWarning/OrientationWarning';
 import { useThreeScene } from './hooks/useThreeScene';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useExperimentAnimation } from './hooks/useExperimentAnimation';
@@ -161,6 +162,8 @@ export default function DoubleSlitExperiment() {
       <TopBar />
 
       <PhaseSelector activePhase={activePhase} onPhaseChange={handlePhaseChange} />
+
+      <OrientationWarning />
 
     </div>
   );
