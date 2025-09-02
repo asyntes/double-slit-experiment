@@ -41,10 +41,17 @@ export default function DoubleSlitExperiment() {
       
       // Calculate interference intensity based on position
       const fringe = Math.cos(x * 0.08) * Math.cos(x * 0.08); // Simulated double-slit interference
+      
+      // Add envelope function for progressive fading towards edges
+      const normalizedX = Math.abs(x) / (stripeRegionWidth / 2); // 0 at center, 1 at edges
+      const envelope = Math.exp(-normalizedX * normalizedX * 3); // Gaussian envelope
+      
+      // Combine fringe pattern with envelope
+      const totalIntensity = fringe * envelope;
       const intensity = Math.random();
       
-      // Only place particle if random value is less than interference intensity
-      if (intensity < fringe * 0.8) {
+      // Only place particle if random value is less than total intensity
+      if (intensity < totalIntensity * 0.8) {
         const particleX = centerX + x + (Math.random() - 0.5) * 2;
         const particleY = centerY + y + (Math.random() - 0.5) * 2;
         
