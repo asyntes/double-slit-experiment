@@ -160,7 +160,7 @@ export default function DoubleSlitExperiment() {
           color: 0x727272,
           side: THREE.DoubleSide
         });
-        detectionScreenRef.current.material = interferenceMaterial;
+        detectionScreenOverlayRef.current.material = interferenceMaterial;
       } else if (activePhase === 'electron') {
         phaseStartTime.current = Date.now();
         animateElectronPattern();
