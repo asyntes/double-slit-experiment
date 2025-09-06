@@ -18,7 +18,7 @@ export default function DoubleSlitExperiment() {
   const animationFrameRef = useRef<number>(0);
 
   const animateElectronPattern = () => {
-    if (!detectionScreenOverlayRef.current || !detectionScreenRef.current) return;
+    if (!detectionScreenRef.current || !detectionScreenBackRef.current) return;
 
     const interferenceTexture = createParticleInterferenceTexture();
     const interferenceMaterial = new THREE.MeshBasicMaterial({
@@ -28,16 +28,16 @@ export default function DoubleSlitExperiment() {
       transparent: true,
       opacity: 0
     });
-    detectionScreenOverlayRef.current.material = interferenceMaterial;
+    detectionScreenRef.current.material = interferenceMaterial;
 
     const baseMaterial = new THREE.MeshBasicMaterial({
       color: 0x333333,
       side: THREE.DoubleSide
     });
-    detectionScreenRef.current.material = baseMaterial;
+    detectionScreenBackRef.current.material = baseMaterial;
 
     const animate = () => {
-      if (!detectionScreenOverlayRef.current?.material) return;
+      if (!detectionScreenRef.current?.material) return;
 
       const elapsed = Date.now() - phaseStartTime.current;
       const duration = 60000;
@@ -45,9 +45,9 @@ export default function DoubleSlitExperiment() {
 
       const easedProgress = 1 - Math.pow(1 - progress, 3);
 
-      if (detectionScreenOverlayRef.current.material instanceof THREE.MeshBasicMaterial) {
-        detectionScreenOverlayRef.current.material.opacity = easedProgress;
-        detectionScreenOverlayRef.current.material.needsUpdate = true;
+      if (detectionScreenRef.current.material instanceof THREE.MeshBasicMaterial) {
+        detectionScreenRef.current.material.opacity = easedProgress;
+        detectionScreenRef.current.material.needsUpdate = true;
       }
 
       if (progress < 1 && activePhase === 'electron') {
@@ -112,7 +112,7 @@ export default function DoubleSlitExperiment() {
     cameraRef,
     controlsRef,
     detectionScreenRef,
-    detectionScreenOverlayRef,
+    detectionScreenBackRef,
     diffractionPanelRef,
     lightBeamRef,
     leftTrapezoidRef,
@@ -130,7 +130,7 @@ export default function DoubleSlitExperiment() {
   }, [sceneReady]);
 
   useEffect(() => {
-    if (lightBeamRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current && detectionScreenOverlayRef.current) {
+    if (lightBeamRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current && detectionScreenBackRef.current) {
       const showLightElements = activePhase === 'lightwave';
       const showObserver = activePhase === 'observer';
 
@@ -143,7 +143,7 @@ export default function DoubleSlitExperiment() {
         color: 0x333333,
         side: THREE.DoubleSide
       });
-      detectionScreenRef.current.material = defaultMaterial;
+      detectionScreenBackRef.current.material = defaultMaterial;
 
       const transparentMaterial = new THREE.MeshBasicMaterial({
         color: 0x333333,
@@ -151,7 +151,7 @@ export default function DoubleSlitExperiment() {
         transparent: true,
         opacity: 0
       });
-      detectionScreenOverlayRef.current.material = transparentMaterial;
+      detectionScreenRef.current.material = transparentMaterial;
 
       if (activePhase === 'lightwave') {
         const interferenceTexture = createParticleInterferenceTexture();

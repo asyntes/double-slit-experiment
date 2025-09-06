@@ -11,27 +11,29 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   cylinder.rotation.x = Math.PI / 2;
   scene.add(cylinder);
 
+  // Detection screen (main, front layer)
   const screenGeometry = new THREE.PlaneGeometry(20, 15);
-  const baseMaterial = new THREE.MeshBasicMaterial({
-    color: 0x333333,
-    side: THREE.DoubleSide
-  });
-  const detectionScreen = new THREE.Mesh(screenGeometry, baseMaterial);
-  detectionScreen.position.set(0, 0, 30.1);
-  detectionScreen.rotation.x = 0;
-  scene.add(detectionScreen);
-
-  const overlayGeometry = new THREE.PlaneGeometry(20, 15);
-  const overlayMaterial = new THREE.MeshBasicMaterial({
+  const screenMaterial = new THREE.MeshBasicMaterial({
     color: 0x333333,
     side: THREE.DoubleSide,
     transparent: true,
     opacity: 0
   });
-  const detectionScreenOverlay = new THREE.Mesh(overlayGeometry, overlayMaterial);
-  detectionScreenOverlay.position.set(0, 0, 30);
-  detectionScreenOverlay.rotation.x = 0;
-  scene.add(detectionScreenOverlay);
+  const detectionScreen = new THREE.Mesh(screenGeometry, screenMaterial);
+  detectionScreen.position.set(0, 0, 30);
+  detectionScreen.rotation.x = 0;
+  scene.add(detectionScreen);
+
+  // Detection screen back (background layer)
+  const backGeometry = new THREE.PlaneGeometry(20, 15);
+  const backMaterial = new THREE.MeshBasicMaterial({
+    color: 0x333333,
+    side: THREE.DoubleSide
+  });
+  const detectionScreenBack = new THREE.Mesh(backGeometry, backMaterial);
+  detectionScreenBack.position.set(0, 0, 30.1);
+  detectionScreenBack.rotation.x = 0;
+  scene.add(detectionScreenBack);
 
   const diffractionPanelGroup = new THREE.Group();
   const diffractionPanelMaterial = new THREE.MeshBasicMaterial({
@@ -144,5 +146,5 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   rightTrapezoid.visible = false;
   scene.add(rightTrapezoid);
 
-  return { detectionScreen, detectionScreenOverlay, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid };
+  return { detectionScreen, detectionScreenBack, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid };
 };
