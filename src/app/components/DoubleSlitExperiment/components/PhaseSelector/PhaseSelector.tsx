@@ -30,7 +30,7 @@ interface PhaseSelectorProps {
 
 export default function PhaseSelector({ activePhase, onPhaseChange }: PhaseSelectorProps) {
   return (
-    <div className="phase-selector absolute bottom-4 left-4 right-4 bg-black/40 backdrop-blur-sm rounded-lg p-3 border border-white/20" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
+    <div className="phase-selector" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
       <div className="phase-controls">
         <PhaseButton label="Proton" active={activePhase === 'proton'} onClick={() => onPhaseChange('proton')} />
         <PhaseButton label="Light Wave" active={activePhase === 'lightwave'} onClick={() => onPhaseChange('lightwave')} />

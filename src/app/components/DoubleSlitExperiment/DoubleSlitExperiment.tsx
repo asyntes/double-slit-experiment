@@ -9,6 +9,7 @@ import OrientationWarning from './components/OrientationWarning/OrientationWarni
 import { useThreeScene } from './hooks/useThreeScene';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useExperimentAnimation } from './hooks/useExperimentAnimation';
+import { useViewportControl } from './hooks/useViewportControl';
 import { updateGeneratorLabel } from './components/SceneLabels';
 
 
@@ -194,6 +195,8 @@ export default function DoubleSlitExperiment() {
     };
   }, [activePhase]);
 
+  useViewportControl();
+  
   useResponsiveLayout({
     scene: sceneRef.current,
     camera: cameraRef.current,
