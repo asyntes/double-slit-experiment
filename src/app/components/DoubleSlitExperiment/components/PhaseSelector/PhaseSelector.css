@@ -1,3 +1,19 @@
+.phase-selector {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1000;
+  /* Safe area insets for mobile browsers */
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Default landscape layout - single row */
 .phase-controls {
   display: flex;
@@ -24,5 +40,27 @@
     font-size: 0.75rem !important;
     width: auto;
     flex: none;
+  }
+}
+
+/* Very small screens or short viewports */
+@media screen and (max-height: 700px), screen and (max-width: 360px) {
+  .phase-selector {
+    bottom: 0.5rem;
+    left: 0.5rem;
+    right: 0.5rem;
+    padding: 0.5rem;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  
+  .phase-controls button {
+    padding: 0.5rem 0.25rem !important;
+    font-size: 0.7rem !important;
+  }
+  
+  .phase-explanation {
+    margin-top: 0.5rem !important;
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
   }
 }
