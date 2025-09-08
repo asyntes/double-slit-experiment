@@ -46,4 +46,20 @@ body {
 
 * {
   touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection for specific UI elements */
+.orientation-title,
+.orientation-message,
+.orientation-subtitle,
+.phase-selector button,
+.top-bar * {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
