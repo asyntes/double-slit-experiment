@@ -12,7 +12,7 @@ function PhaseButton({ label, active, disabled = false, onClick }: PhaseButtonPr
   const activeClasses = "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-[0_0_20px_rgba(147,51,234,0.5)] scale-105";
   const inactiveClasses = disabled
     ? "bg-black/60 border border-white/30 text-white cursor-not-allowed opacity-50"
-    : "bg-black/60 border border-white/30 text-white hover:bg-gradient-to-r hover:from-blue-500/20 hover:via-purple-500/20 hover:to-pink-500/20 hover:border-purple-400/50 hover:shadow-[0_0_15px_rgba(147,51,234,0.3)] hover:scale-102 cursor-pointer";
+    : "bg-black/60 border border-white/30 text-white hover:bg-gradient-to-r hover:from-blue-500/20 hover:via-purple-500/20 hover:to-pink-500/20 hover:border-purple-400/50 hover:shadow-[0_0_15px_rgba(147,51,234,0.3)] hover:scale-[1.02] cursor-pointer";
 
   return (
     <button
