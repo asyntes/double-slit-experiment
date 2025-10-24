@@ -8,17 +8,22 @@ interface PhaseButtonProps {
 }
 
 function PhaseButton({ label, active, disabled = false, onClick }: PhaseButtonProps) {
-  const baseClasses = "px-4 py-2 rounded-md font-semibold text-sm transition-all duration-300 uppercase";
-  const activeClasses = "bg-white/90 text-black hover:bg-white";
-  const inactiveClasses = disabled ? "bg-black/60 border border-white/30 text-white cursor-not-allowed opacity-50" : "bg-black/60 border border-white/30 text-white hover:bg-white/20 cursor-pointer";
+  const baseClasses = "px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-500 uppercase relative overflow-hidden";
+  const activeClasses = "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-[0_0_20px_rgba(147,51,234,0.5)] scale-105";
+  const inactiveClasses = disabled
+    ? "bg-black/60 border border-white/30 text-white cursor-not-allowed opacity-50"
+    : "bg-black/60 border border-white/30 text-white hover:bg-gradient-to-r hover:from-blue-500/20 hover:via-purple-500/20 hover:to-pink-500/20 hover:border-purple-400/50 hover:shadow-[0_0_15px_rgba(147,51,234,0.3)] hover:scale-102 cursor-pointer";
 
   return (
     <button
-      className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
+      className={`${baseClasses} ${active ? activeClasses : inactiveClasses} phase-button`}
       disabled={disabled}
       onClick={onClick}
     >
-      {label}
+      <span className="relative z-10">{label}</span>
+      {!disabled && !active && (
+        <span className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-purple-500/30 to-pink-500/0 opacity-0 hover:opacity-100 transition-opacity duration-500 shimmer"></span>
+      )}
     </button>
   );
 }

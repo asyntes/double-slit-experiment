@@ -252,7 +252,7 @@ export default function DoubleSlitExperiment() {
 
 
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
+    <div className="relative w-full h-screen overflow-hidden experiment-container" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
       <div ref={mountRef} className="w-full h-full" />
 
       <TopBar />
