@@ -37,11 +37,17 @@ const createTextLabel = (text: string): THREE.Group => {
     transparent: true,
     opacity: 0.9,
     // Keep label luminance below the bloom threshold so text doesn't glow
-    color: 0xb9c1cf
+    color: 0xb9c1cf,
+    // Without this the sprite's full quad (including fully transparent pixels)
+    // writes to the depth buffer and occludes the additive laser beam drawn
+    // afterwards, which shows up as invisible boxes cutting through the beam.
+    depthWrite: false
   });
 
   const sprite = new THREE.Sprite(spriteMaterial);
   sprite.scale.set(6, 1.5, 1);
+  // Draw labels after the beam/trapezoids (renderOrder 1) so text stays readable
+  sprite.renderOrder = 2;
   labelGroup.add(sprite);
 
   return labelGroup;

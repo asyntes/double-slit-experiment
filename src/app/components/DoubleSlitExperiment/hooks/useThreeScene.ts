@@ -57,11 +57,13 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
     transparent: true,
     opacity: 0.9,
     // Keep label luminance below the bloom threshold so text doesn't glow
-    color: 0xb9c1cf
+    color: 0xb9c1cf,
+    depthWrite: false
   });
   const sprite = new THREE.Sprite(spriteMaterial);
   sprite.scale.set(6, 1.5, 1);
   sprite.position.set(0, 1.2, 0);
+  sprite.renderOrder = 2;
 
   observerGroup.add(sprite);
 
