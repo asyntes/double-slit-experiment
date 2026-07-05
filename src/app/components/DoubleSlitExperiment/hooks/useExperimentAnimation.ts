@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { ParticleSystem } from '../components/ParticleSystem';
 import { updateParticlePhysics } from '../utils/physicsSimulation';
 
@@ -8,6 +9,7 @@ interface AnimationProps {
   scene: THREE.Scene | null;
   camera: THREE.PerspectiveCamera | null;
   renderer: THREE.WebGLRenderer | null;
+  composer: EffectComposer | null;
   controls: OrbitControls | null;
   particleSystem: ParticleSystem | null;
   detectionScreen: THREE.Mesh | null;
@@ -18,6 +20,7 @@ export const useExperimentAnimation = ({
   scene,
   camera,
   renderer,
+  composer,
   controls,
   particleSystem,
   detectionScreen,
@@ -82,7 +85,11 @@ export const useExperimentAnimation = ({
         particleSystem.setParticles(updatedParticles);
       }
 
-      renderer.render(scene, camera);
+      if (composer) {
+        composer.render();
+      } else {
+        renderer.render(scene, camera);
+      }
     };
 
     animate();
@@ -92,5 +99,5 @@ export const useExperimentAnimation = ({
         cancelAnimationFrame(animationIdRef.current);
       }
     };
-  }, [scene, camera, renderer, controls, particleSystem, detectionScreen, activePhase]);
+  }, [scene, camera, renderer, composer, controls, particleSystem, detectionScreen, activePhase]);
 };

@@ -110,6 +110,7 @@ export default function DoubleSlitExperiment() {
     mountRef,
     sceneRef,
     rendererRef,
+    composerRef,
     cameraRef,
     controlsRef,
     detectionScreenRef,
@@ -201,6 +202,7 @@ export default function DoubleSlitExperiment() {
     scene: sceneRef.current,
     camera: cameraRef.current,
     renderer: rendererRef.current,
+    composer: composerRef.current,
     controls: controlsRef.current
   });
 
@@ -208,6 +210,7 @@ export default function DoubleSlitExperiment() {
     scene: sceneRef.current,
     camera: cameraRef.current,
     renderer: rendererRef.current,
+    composer: composerRef.current,
     controls: controlsRef.current,
     particleSystem: particleSystemRef.current,
     detectionScreen: detectionScreenRef.current,

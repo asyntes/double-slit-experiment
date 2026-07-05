@@ -21,9 +21,10 @@ export class ParticleSystem {
   }
 
   createSingleProton() {
-    const geometry = new THREE.SphereGeometry(0.05, 8, 6);
+    const geometry = new THREE.SphereGeometry(0.06, 12, 8);
+    // HDR color (values > 1) so the bloom pass makes particles glow
     const material = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
+      color: new THREE.Color(0xff5533).multiplyScalar(2.5),
       transparent: false
     });
 
@@ -50,9 +51,10 @@ export class ParticleSystem {
   }
 
   createSingleElectron() {
-    const geometry = new THREE.SphereGeometry(0.05, 8, 6);
+    const geometry = new THREE.SphereGeometry(0.06, 12, 8);
+    // HDR color (values > 1) so the bloom pass makes particles glow
     const material = new THREE.MeshBasicMaterial({
-      color: 0x0000ff,
+      color: new THREE.Color(0x3388ff).multiplyScalar(2.5),
       transparent: false
     });
 

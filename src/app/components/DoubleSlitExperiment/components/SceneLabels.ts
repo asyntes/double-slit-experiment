@@ -3,21 +3,24 @@ import * as THREE from 'three';
 const createTextLabel = (text: string): THREE.Group => {
   const labelGroup = new THREE.Group();
 
+  // Higher-resolution canvas keeps the text crisp when zooming in
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d')!;
-  canvas.width = 512;
-  canvas.height = 128;
+  canvas.width = 1024;
+  canvas.height = 256;
 
   context.fillStyle = 'rgba(0, 0, 0, 0)';
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   context.fillStyle = 'white';
-  context.font = 'bold 36px Arial';
+  context.font = 'bold 72px Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
+  context.shadowColor = 'rgba(140, 190, 255, 0.85)';
+  context.shadowBlur = 16;
 
   const lines = text.split('\n');
-  const lineHeight = 45;
+  const lineHeight = 90;
   const startY = canvas.height / 2 - (lines.length - 1) * lineHeight / 2;
 
   lines.forEach((line, index) => {
@@ -25,6 +28,7 @@ const createTextLabel = (text: string): THREE.Group => {
   });
 
   const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = 4;
   texture.needsUpdate = true;
 
   const spriteMaterial = new THREE.SpriteMaterial({
