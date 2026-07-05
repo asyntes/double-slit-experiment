@@ -51,10 +51,11 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 4;
-  const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
   const sprite = new THREE.Sprite(spriteMaterial);
   sprite.scale.set(6, 1.5, 1);
   sprite.position.set(0, 1.2, 0);
+  sprite.renderOrder = 2;
 
   observerGroup.add(sprite);
 
