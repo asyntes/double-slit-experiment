@@ -40,7 +40,8 @@ export const updateParticlePhysics = (
         // Convert particle to detection mark (proton behavior)
         particle.position.z = 30;
         if (particle.material instanceof THREE.MeshBasicMaterial) {
-          particle.material.color.setHex(0xffffff);
+          // Slightly over-white HDR value so detection marks glow via bloom
+          particle.material.color.setRGB(1.6, 1.6, 1.5);
         }
         particle.userData.velocity.x = 0;
         particle.userData.velocity.y = 0;

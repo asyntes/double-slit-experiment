@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 
 interface ResponsiveLayoutProps {
   scene: THREE.Scene | null;
   camera: THREE.PerspectiveCamera | null;
   renderer: THREE.WebGLRenderer | null;
+  composer: EffectComposer | null;
   controls: OrbitControls | null;
 }
 
-export const useResponsiveLayout = ({ scene, camera, renderer, controls }: ResponsiveLayoutProps) => {
+export const useResponsiveLayout = ({ scene, camera, renderer, composer, controls }: ResponsiveLayoutProps) => {
   useEffect(() => {
     if (!scene || !camera || !renderer || !controls) return;
 
@@ -32,6 +34,7 @@ export const useResponsiveLayout = ({ scene, camera, renderer, controls }: Respo
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      composer?.setSize(window.innerWidth, window.innerHeight);
 
       // Reset scene position first
       scene.position.y = 0;
@@ -55,5 +58,5 @@ export const useResponsiveLayout = ({ scene, camera, renderer, controls }: Respo
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [scene, camera, renderer, controls]);
+  }, [scene, camera, renderer, composer, controls]);
 };
