@@ -174,16 +174,23 @@ const createGeneratorRearAssembly = (
   rearGroup.add(statusLight);
 
   const cabinetHeight = 9;
-  const cabinetZ = VESSEL_BACK_Z - 14;
+  const cabinetWidth = 12;
+  const cabinetDepth = 5.5;
+  // Place the cabinet behind the end-cap dome and offset to the side so it
+  // never intersects the vessel hull or the hemisphere.
+  const cabinetX = -(VESSEL_RADIUS + 5);
+  const cabinetZ = END_CAP_Z - VESSEL_RADIUS - cabinetDepth / 2 - 5;
+  const cabinetTopY = worldToLocalY(SCENE_FLOOR_Y + cabinetHeight);
+
   addMesh(
-    new THREE.Mesh(new THREE.BoxGeometry(12, cabinetHeight, 5.5), darkMetalMaterial)
-  ).position.set(0, worldToLocalY(SCENE_FLOOR_Y + cabinetHeight / 2), cabinetZ);
+    new THREE.Mesh(new THREE.BoxGeometry(cabinetWidth, cabinetHeight, cabinetDepth), darkMetalMaterial)
+  ).position.set(cabinetX, worldToLocalY(SCENE_FLOOR_Y + cabinetHeight / 2), cabinetZ);
 
   const cabinetPanel = new THREE.Mesh(
     new THREE.PlaneGeometry(4.5, 1.0),
     new THREE.MeshBasicMaterial({ color: new THREE.Color(0x77bbff).multiplyScalar(1.2) })
   );
-  cabinetPanel.position.set(-6.01, worldToLocalY(SCENE_FLOOR_Y + 6.5), cabinetZ);
+  cabinetPanel.position.set(cabinetX - cabinetWidth / 2 - 0.01, worldToLocalY(SCENE_FLOOR_Y + 6.5), cabinetZ);
   cabinetPanel.rotation.y = -Math.PI / 2;
   rearGroup.add(cabinetPanel);
 
@@ -194,24 +201,27 @@ const createGeneratorRearAssembly = (
         color: new THREE.Color(i === 2 ? 0x33ff77 : 0xffaa33).multiplyScalar(1.4)
       })
     );
-    led.position.set(-6.01, worldToLocalY(SCENE_FLOOR_Y + 4.8), cabinetZ + z);
+    led.position.set(cabinetX - cabinetWidth / 2 - 0.01, worldToLocalY(SCENE_FLOOR_Y + 4.8), cabinetZ + z);
     led.rotation.y = -Math.PI / 2;
     rearGroup.add(led);
   });
 
-  const cableOutset = VESSEL_RADIUS + 1.5;
+  const cableOutset = VESSEL_RADIUS + 2;
+  const cableEntryX = cabinetX + cabinetWidth / 2 - 1;
   const cablePaths: THREE.Vector3[][] = [
     [
       new THREE.Vector3(0.9, coronaCenterY, VESSEL_CENTER_Z - 2),
-      new THREE.Vector3(cableOutset, coronaCenterY - 1.2, VESSEL_CENTER_Z - 8),
-      new THREE.Vector3(cableOutset + 0.4, VESSEL_RADIUS * 0.25, VESSEL_BACK_Z - 4),
-      new THREE.Vector3(2, worldToLocalY(SCENE_FLOOR_Y + 7.5), cabinetZ)
+      new THREE.Vector3(cableOutset, coronaCenterY - 1, VESSEL_CENTER_Z - 8),
+      new THREE.Vector3(cableOutset, VESSEL_RADIUS * 0.35, VESSEL_BACK_Z - 2),
+      new THREE.Vector3(cableOutset, VESSEL_RADIUS * 0.12, END_CAP_Z - VESSEL_RADIUS - 2),
+      new THREE.Vector3(cableEntryX, cabinetTopY - 0.4, cabinetZ)
     ],
     [
       new THREE.Vector3(-0.9, coronaCenterY, VESSEL_CENTER_Z - 2),
-      new THREE.Vector3(-cableOutset, coronaCenterY - 1.4, VESSEL_CENTER_Z - 8),
-      new THREE.Vector3(-(cableOutset + 0.4), VESSEL_RADIUS * 0.2, VESSEL_BACK_Z - 4),
-      new THREE.Vector3(-2, worldToLocalY(SCENE_FLOOR_Y + 7.5), cabinetZ)
+      new THREE.Vector3(-cableOutset, coronaCenterY - 1.2, VESSEL_CENTER_Z - 8),
+      new THREE.Vector3(-cableOutset, VESSEL_RADIUS * 0.28, VESSEL_BACK_Z - 2),
+      new THREE.Vector3(-cableOutset, VESSEL_RADIUS * 0.08, END_CAP_Z - VESSEL_RADIUS - 2),
+      new THREE.Vector3(cableEntryX, cabinetTopY - 0.6, cabinetZ + 0.8)
     ]
   ];
   cablePaths.forEach(points => {
