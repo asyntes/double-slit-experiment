@@ -16,6 +16,16 @@ interface AnimationProps {
   activePhase: string;
 }
 
+// Total number of particles fired per phase: the source has a finite budget,
+// so deposits on the screens are bounded and never need to be recycled.
+// The electron phase fires many more particles so the interference pattern
+// can build up point by point.
+const PARTICLE_BUDGET: Record<string, number> = {
+  proton: 400,
+  observer: 400,
+  electron: 1500
+};
+
 export const useExperimentAnimation = ({
   scene,
   camera,
@@ -44,6 +54,9 @@ export const useExperimentAnimation = ({
     console.log('Starting animation loop');
 
     let frameCount = 0;
+    // Counts particles fired by the source in the current phase.
+    // Resets whenever the effect re-runs (i.e. on phase change).
+    let emittedCount = 0;
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
@@ -60,16 +73,23 @@ export const useExperimentAnimation = ({
       // Update experiment physics  
       const currentPhase = activePhase; // Use prop directly instead of ref
 
-      // Create new particles only in proton/electron/observer phases and if particle system exists.
-      // Marks stuck on the panels are excluded from the cap so emission never stalls.
-      if ((currentPhase === 'proton' || currentPhase === 'electron' || currentPhase === 'observer') && particleSystem && particleSystem.getActiveParticleCount() < 120) {
-        const particlesToAdd = Math.min(5, 120 - particleSystem.getActiveParticleCount());
+      // Fire new particles only while the finite per-phase budget lasts,
+      // keeping at most 120 particles in flight at once. Marks stuck on the
+      // screens don't count against the in-flight cap.
+      const budget = PARTICLE_BUDGET[currentPhase] ?? 0;
+      if (budget > 0 && particleSystem && emittedCount < budget && particleSystem.getActiveParticleCount() < 120) {
+        const particlesToAdd = Math.min(
+          5,
+          120 - particleSystem.getActiveParticleCount(),
+          budget - emittedCount
+        );
         for (let i = 0; i < particlesToAdd; i++) {
           if (currentPhase === 'proton') {
             particleSystem.createSingleProton();
           } else if (currentPhase === 'electron' || currentPhase === 'observer') {
             particleSystem.createSingleElectron();
           }
+          emittedCount++;
         }
       }
 
@@ -84,9 +104,6 @@ export const useExperimentAnimation = ({
         );
 
         particleSystem.setParticles(updatedParticles);
-
-        // Keep the number of stuck marks bounded for performance
-        particleSystem.limitMarks(600);
       }
 
       if (composer) {
