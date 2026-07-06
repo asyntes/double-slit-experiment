@@ -6,8 +6,8 @@ const createGenerator = (scene: THREE.Scene) => {
   const bodyGeometry = new THREE.CylinderGeometry(3.5, 3.5, 12, 48);
   const bodyMaterial = new THREE.MeshStandardMaterial({
     color: 0xd8dde6,
-    metalness: 0.85,
-    roughness: 0.3
+    metalness: 0.6,
+    roughness: 0.5
   });
   const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
   body.rotation.x = Math.PI / 2;
@@ -18,8 +18,8 @@ const createGenerator = (scene: THREE.Scene) => {
   // Reinforcement rings along the barrel
   const ringMaterial = new THREE.MeshStandardMaterial({
     color: 0x6b7484,
-    metalness: 0.9,
-    roughness: 0.35
+    metalness: 0.65,
+    roughness: 0.55
   });
   [-4.5, -1.5, 1.5, 4.5].forEach(offset => {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(3.55, 0.18, 16, 64), ringMaterial);
