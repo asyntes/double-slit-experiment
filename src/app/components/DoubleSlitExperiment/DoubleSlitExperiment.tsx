@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import './DoubleSlitExperiment.css';
 import PhaseSelector from './components/PhaseSelector/PhaseSelector';
@@ -19,7 +19,7 @@ export default function DoubleSlitExperiment() {
   const phaseStartTime = useRef<number>(0);
   const animationFrameRef = useRef<number>(0);
 
-  const animateElectronPattern = () => {
+  const animateElectronPattern = useCallback(() => {
     if (!detectionScreenRef.current || !detectionScreenBackRef.current) return;
 
     const interferenceTexture = createParticleInterferenceTexture();
@@ -59,7 +59,18 @@ export default function DoubleSlitExperiment() {
     }
 
     animate();
-  };
+  }, [activePhase]);
+
+  const restartElectronPhase = useCallback(() => {
+    phaseStartTime.current = Date.now();
+    animateElectronPattern();
+  }, [animateElectronPattern]);
+
+  const handlePhaseCycleRestart = useCallback((phase: string) => {
+    if (phase === 'electron') {
+      restartElectronPhase();
+    }
+  }, [restartElectronPhase]);
 
   const createParticleInterferenceTexture = (): THREE.CanvasTexture => {
     const canvas = document.createElement('canvas');
@@ -159,8 +170,7 @@ export default function DoubleSlitExperiment() {
         });
         detectionScreenRef.current.material = interferenceMaterial;
       } else if (activePhase === 'electron') {
-        phaseStartTime.current = Date.now();
-        animateElectronPattern();
+        restartElectronPhase();
       }
 
       let labelText = 'Particle Generator';
@@ -180,7 +190,7 @@ export default function DoubleSlitExperiment() {
 
       console.log('Light elements visibility:', showLightElements, 'Observer visibility:', showObserver, 'Generator label:', labelText, 'for phase:', activePhase);
     }
-  }, [activePhase, sceneReady]);
+  }, [activePhase, sceneReady, restartElectronPhase]);
 
   // Cleanup animation on unmount or phase change
   useEffect(() => {
@@ -209,7 +219,8 @@ export default function DoubleSlitExperiment() {
     controls: controlsRef.current,
     particleSystem: particleSystemRef.current,
     detectionScreen: detectionScreenRef.current,
-    activePhase
+    activePhase,
+    onPhaseCycleRestart: handlePhaseCycleRestart
   });
 
 
