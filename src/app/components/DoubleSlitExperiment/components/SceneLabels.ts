@@ -16,9 +16,6 @@ const createTextLabel = (text: string): THREE.Group => {
   context.font = 'bold 72px Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  // Subtle halo only, so labels stay readable without glowing
-  context.shadowColor = 'rgba(140, 190, 255, 0.35)';
-  context.shadowBlur = 6;
 
   const lines = text.split('\n');
   const lineHeight = 90;
