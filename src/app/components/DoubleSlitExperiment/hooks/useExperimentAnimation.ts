@@ -60,9 +60,10 @@ export const useExperimentAnimation = ({
       // Update experiment physics  
       const currentPhase = activePhase; // Use prop directly instead of ref
 
-      // Create new particles only in proton/electron/observer phases and if particle system exists
-      if ((currentPhase === 'proton' || currentPhase === 'electron' || currentPhase === 'observer') && particleSystem && particleSystem.getParticleCount() < 120) {
-        const particlesToAdd = Math.min(5, 120 - particleSystem.getParticleCount());
+      // Create new particles only in proton/electron/observer phases and if particle system exists.
+      // Marks stuck on the panels are excluded from the cap so emission never stalls.
+      if ((currentPhase === 'proton' || currentPhase === 'electron' || currentPhase === 'observer') && particleSystem && particleSystem.getActiveParticleCount() < 120) {
+        const particlesToAdd = Math.min(5, 120 - particleSystem.getActiveParticleCount());
         for (let i = 0; i < particlesToAdd; i++) {
           if (currentPhase === 'proton') {
             particleSystem.createSingleProton();
@@ -83,6 +84,9 @@ export const useExperimentAnimation = ({
         );
 
         particleSystem.setParticles(updatedParticles);
+
+        // Keep the number of stuck marks bounded for performance
+        particleSystem.limitMarks(600);
       }
 
       if (composer) {
