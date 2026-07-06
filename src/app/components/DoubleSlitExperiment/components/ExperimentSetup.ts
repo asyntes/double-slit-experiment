@@ -6,7 +6,10 @@ const EMITTER_APERTURE_RADIUS = 2.5;
 export const GENERATOR_GROUP_Z = -5;
 export const EMITTER_APERTURE_LOCAL_Z = 6.01;
 export const EMITTER_WORLD_Z = GENERATOR_GROUP_Z + EMITTER_APERTURE_LOCAL_Z;
-export const SCENE_FLOOR_Y = -7.6;
+
+/** Must match `scene.fog.near` in useThreeScene — barrel tail fades into the horizon. */
+const FOG_NEAR = 70;
+const BARREL_BACK_LOCAL_Z = -(FOG_NEAR - GENERATOR_GROUP_Z - 12);
 
 export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial =>
   new THREE.MeshStandardMaterial({
@@ -16,205 +19,11 @@ export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial 
     side: THREE.DoubleSide
   });
 
-// Rear assembly: the barrel is the exit snout of a much larger pressure vessel.
-// Supports are side legs from the floor to the vessel equator — they never
-// penetrate below the floor plane.
-const createGeneratorRearAssembly = (
-  bodyMaterial: THREE.MeshStandardMaterial,
-  ringMaterial: THREE.MeshStandardMaterial
-): THREE.Group => {
-  const rearGroup = new THREE.Group();
-
-  const BARREL_RADIUS = 3.5;
-  const VESSEL_RADIUS = 9;
-  const VESSEL_LENGTH = 24;
-  const CONE_LENGTH = 4.5;
-
-  const BARREL_BACK_Z = -6;
-  const CONE_BACK_Z = BARREL_BACK_Z - CONE_LENGTH;
-  const VESSEL_FRONT_Z = CONE_BACK_Z;
-  const VESSEL_CENTER_Z = VESSEL_FRONT_Z - VESSEL_LENGTH / 2;
-  const VESSEL_BACK_Z = VESSEL_FRONT_Z - VESSEL_LENGTH;
-  const FLANGE_Z = VESSEL_BACK_Z;
-  const END_CAP_Z = FLANGE_Z - 0.25;
-
-  const ceramicMaterial = new THREE.MeshStandardMaterial({
-    color: 0xf2ede2,
-    metalness: 0.05,
-    roughness: 0.35
-  });
-  const darkMetalMaterial = new THREE.MeshStandardMaterial({
-    color: 0x3a4150,
-    metalness: 0.75,
-    roughness: 0.4
-  });
-  const cableMaterial = new THREE.MeshStandardMaterial({
-    color: 0x14161c,
-    metalness: 0.2,
-    roughness: 0.8
-  });
-
-  const addMesh = (mesh: THREE.Mesh) => {
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    rearGroup.add(mesh);
-    return mesh;
-  };
-
-  const cone = addMesh(
-    new THREE.Mesh(
-      new THREE.CylinderGeometry(BARREL_RADIUS, VESSEL_RADIUS, CONE_LENGTH, 56),
-      bodyMaterial
-    )
-  );
-  cone.rotation.x = Math.PI / 2;
-  cone.position.z = BARREL_BACK_Z - CONE_LENGTH / 2;
-
-  const coneRim = addMesh(
-    new THREE.Mesh(new THREE.TorusGeometry(BARREL_RADIUS + 0.05, 0.16, 16, 64), ringMaterial)
-  );
-  coneRim.position.z = BARREL_BACK_Z + 0.01;
-
-  const vessel = addMesh(
-    new THREE.Mesh(
-      new THREE.CylinderGeometry(VESSEL_RADIUS, VESSEL_RADIUS, VESSEL_LENGTH, 64),
-      bodyMaterial
-    )
-  );
-  vessel.rotation.x = Math.PI / 2;
-  vessel.position.z = VESSEL_CENTER_Z;
-
-  [-13, -20, -30, -36].forEach(offset => {
-    const ring = addMesh(
-      new THREE.Mesh(new THREE.TorusGeometry(VESSEL_RADIUS + 0.08, 0.28, 16, 80), ringMaterial)
-    );
-    ring.position.z = offset;
-  });
-
-  const flange = addMesh(
-    new THREE.Mesh(
-      new THREE.CylinderGeometry(VESSEL_RADIUS + 0.35, VESSEL_RADIUS + 0.35, 0.6, 64),
-      ringMaterial
-    )
-  );
-  flange.rotation.x = Math.PI / 2;
-  flange.position.z = FLANGE_Z;
-
-  const boltGeometry = new THREE.CylinderGeometry(0.18, 0.18, 0.8, 12);
-  for (let i = 0; i < 18; i++) {
-    const angle = (i / 18) * Math.PI * 2;
-    const bolt = addMesh(new THREE.Mesh(boltGeometry, darkMetalMaterial));
-    bolt.rotation.x = Math.PI / 2;
-    bolt.position.set(
-      Math.cos(angle) * (VESSEL_RADIUS - 0.35),
-      Math.sin(angle) * (VESSEL_RADIUS - 0.35),
-      FLANGE_Z
-    );
-  }
-
-  const endCap = addMesh(
-    new THREE.Mesh(
-      new THREE.SphereGeometry(VESSEL_RADIUS, 56, 36, 0, Math.PI * 2, 0, Math.PI / 2),
-      bodyMaterial
-    )
-  );
-  endCap.rotation.x = -Math.PI / 2;
-  endCap.position.z = END_CAP_Z;
-
-  // Side legs: floor (y = SCENE_FLOOR_Y) up to the vessel equator (y = 0)
-  const legHeight = -SCENE_FLOOR_Y;
-  const legCenterY = SCENE_FLOOR_Y + legHeight / 2;
-  [-14, -30].forEach(z => {
-    [-1, 1].forEach(side => {
-      addMesh(
-        new THREE.Mesh(new THREE.BoxGeometry(1.1, legHeight, 1.8), darkMetalMaterial)
-      ).position.set(side * (VESSEL_RADIUS + 0.55), legCenterY, z);
-    });
-  });
-
-  const crownFlange = addMesh(
-    new THREE.Mesh(new THREE.CylinderGeometry(2.8, 2.8, 0.35, 40), ringMaterial)
-  );
-  crownFlange.position.set(0, VESSEL_RADIUS + 0.175, VESSEL_CENTER_Z);
-
-  const bushingBaseY = VESSEL_RADIUS + 0.35;
-  addMesh(
-    new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 5.5, 32), darkMetalMaterial)
-  ).position.set(0, bushingBaseY + 2.75, VESSEL_CENTER_Z);
-
-  for (let i = 0; i < 6; i++) {
-    addMesh(
-      new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.4, 48), ceramicMaterial)
-    ).position.set(0, bushingBaseY + 0.4 + i * 0.85, VESSEL_CENTER_Z);
-  }
-
-  const topDiscY = bushingBaseY + 0.4 + 5 * 0.85;
-  const coronaRadius = 2.2;
-  const coronaCenterY = topDiscY + 0.2 + coronaRadius + 0.12;
-  addMesh(
-    new THREE.Mesh(new THREE.SphereGeometry(coronaRadius, 40, 28), bodyMaterial)
-  ).position.set(0, coronaCenterY, VESSEL_CENTER_Z);
-
-  const statusLight = new THREE.Mesh(
-    new THREE.SphereGeometry(0.26, 20, 16),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffaa33).multiplyScalar(1.5) })
-  );
-  statusLight.position.set(0, coronaCenterY + 0.35, VESSEL_CENTER_Z - coronaRadius - 0.3);
-  rearGroup.add(statusLight);
-
-  const cabinetHeight = 6;
-  const cabinetZ = VESSEL_BACK_Z - 12;
-  addMesh(
-    new THREE.Mesh(new THREE.BoxGeometry(8, cabinetHeight, 4), darkMetalMaterial)
-  ).position.set(0, SCENE_FLOOR_Y + cabinetHeight / 2, cabinetZ);
-
-  const cabinetPanel = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.2, 0.8),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(0x77bbff).multiplyScalar(1.2) })
-  );
-  cabinetPanel.position.set(-4.01, SCENE_FLOOR_Y + 4.8, cabinetZ);
-  cabinetPanel.rotation.y = -Math.PI / 2;
-  rearGroup.add(cabinetPanel);
-
-  [-1, 0, 1].forEach((z, i) => {
-    const led = new THREE.Mesh(
-      new THREE.CircleGeometry(0.13, 16),
-      new THREE.MeshBasicMaterial({
-        color: new THREE.Color(i === 2 ? 0x33ff77 : 0xffaa33).multiplyScalar(1.4)
-      })
-    );
-    led.position.set(-4.01, SCENE_FLOOR_Y + 3.6, cabinetZ + z);
-    led.rotation.y = -Math.PI / 2;
-    rearGroup.add(led);
-  });
-
-  const cableOutset = VESSEL_RADIUS + 1.2;
-  const cablePaths: THREE.Vector3[][] = [
-    [
-      new THREE.Vector3(0.7, coronaCenterY, VESSEL_CENTER_Z - 1.2),
-      new THREE.Vector3(cableOutset, coronaCenterY - 0.8, VESSEL_CENTER_Z - 5),
-      new THREE.Vector3(cableOutset, VESSEL_RADIUS * 0.3, VESSEL_BACK_Z - 3),
-      new THREE.Vector3(1.5, SCENE_FLOOR_Y + 5, cabinetZ)
-    ],
-    [
-      new THREE.Vector3(-0.7, coronaCenterY, VESSEL_CENTER_Z - 1.2),
-      new THREE.Vector3(-cableOutset, coronaCenterY - 1, VESSEL_CENTER_Z - 5),
-      new THREE.Vector3(-cableOutset, VESSEL_RADIUS * 0.25, VESSEL_BACK_Z - 3),
-      new THREE.Vector3(-1.5, SCENE_FLOOR_Y + 5, cabinetZ)
-    ]
-  ];
-  cablePaths.forEach(points => {
-    const curve = new THREE.CatmullRomCurve3(points);
-    addMesh(new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.24, 12), cableMaterial));
-  });
-
-  return rearGroup;
-};
-
 const createGenerator = (scene: THREE.Scene) => {
   const generatorGroup = new THREE.Group();
 
-  const bodyGeometry = new THREE.CylinderGeometry(3.5, 3.5, 12, 48);
+  const barrelLength = EMITTER_APERTURE_LOCAL_Z - BARREL_BACK_LOCAL_Z;
+  const bodyGeometry = new THREE.CylinderGeometry(3.5, 3.5, barrelLength, 48);
   const bodyMaterial = new THREE.MeshStandardMaterial({
     color: 0xd8dde6,
     metalness: 0.6,
@@ -222,24 +31,27 @@ const createGenerator = (scene: THREE.Scene) => {
   });
   const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
   body.rotation.x = Math.PI / 2;
+  body.position.z = (EMITTER_APERTURE_LOCAL_Z + BARREL_BACK_LOCAL_Z) / 2;
   body.castShadow = true;
   body.receiveShadow = true;
   generatorGroup.add(body);
 
-  // Reinforcement rings along the barrel
   const ringMaterial = new THREE.MeshStandardMaterial({
     color: 0x6b7484,
     metalness: 0.65,
     roughness: 0.55
   });
-  [-4.5, -1.5, 1.5, 4.5].forEach(offset => {
+  [-4.5, -1.5, 1.5, 4.5, -14, -26, -38, -50].forEach(offset => {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(3.55, 0.18, 16, 64), ringMaterial);
     ring.position.z = offset;
     ring.castShadow = true;
     generatorGroup.add(ring);
   });
 
-  generatorGroup.add(createGeneratorRearAssembly(bodyMaterial, ringMaterial));
+  const tailRing = new THREE.Mesh(new THREE.TorusGeometry(3.55, 0.22, 16, 64), ringMaterial);
+  tailRing.position.z = BARREL_BACK_LOCAL_Z + 0.35;
+  tailRing.castShadow = true;
+  generatorGroup.add(tailRing);
 
   // Glowing emitter aperture on the muzzle — sized to match laser beam and particle spread
   const apertureGeometry = new THREE.CircleGeometry(EMITTER_APERTURE_RADIUS, 48);
