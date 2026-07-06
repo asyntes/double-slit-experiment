@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+const EMITTER_APERTURE_RADIUS = 2.5;
+
 export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial =>
   new THREE.MeshStandardMaterial({
     color: 0x30343c,
@@ -36,8 +38,8 @@ const createGenerator = (scene: THREE.Scene) => {
     generatorGroup.add(ring);
   });
 
-  // Glowing emitter aperture on the muzzle
-  const apertureGeometry = new THREE.CircleGeometry(1.2, 48);
+  // Glowing emitter aperture on the muzzle — sized to match laser beam and particle spread
+  const apertureGeometry = new THREE.CircleGeometry(EMITTER_APERTURE_RADIUS, 48);
   const apertureMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(0x77bbff).multiplyScalar(1.6)
   });
@@ -45,7 +47,7 @@ const createGenerator = (scene: THREE.Scene) => {
   aperture.position.z = 6.01;
   generatorGroup.add(aperture);
 
-  const apertureRimGeometry = new THREE.TorusGeometry(1.35, 0.12, 16, 48);
+  const apertureRimGeometry = new THREE.TorusGeometry(EMITTER_APERTURE_RADIUS + 0.15, 0.12, 16, 48);
   const apertureRim = new THREE.Mesh(apertureRimGeometry, ringMaterial);
   apertureRim.position.z = 6.0;
   generatorGroup.add(apertureRim);
@@ -158,7 +160,7 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
 
   scene.add(diffractionPanelGroup);
 
-  const beamRadius = 2.5;
+  const beamRadius = EMITTER_APERTURE_RADIUS;
   const beamLength = 15;
   const beamGeometry = new THREE.CylinderGeometry(beamRadius, beamRadius, beamLength, 48, 1, true);
   const beamMaterial = new THREE.MeshBasicMaterial({
