@@ -84,6 +84,11 @@ export const useExperimentAnimation = ({
         );
 
         particleSystem.setParticles(updatedParticles);
+
+        // Safety cap so the scene never accumulates unbounded meshes.
+        // Electron phase keeps many more marks so the interference pattern
+        // can fully build up before older deposits are consumed.
+        particleSystem.limitMarks(currentPhase === 'electron' ? 1200 : 400);
       }
 
       if (composer) {

@@ -1,6 +1,16 @@
 import * as THREE from 'three';
 import { Particle } from '../components/ParticleSystem';
 
+// How long stuck marks stay on the screens before being consumed, per phase.
+// Electron marks last until the full interference pattern is realized (60s),
+// matching the pattern build-up animation duration.
+const MARK_LIFETIME_SECONDS: Record<string, number> = {
+  proton: 8,
+  observer: 8,
+  electron: 60
+};
+const MARK_FADE_SECONDS = 2.5;
+
 export const updateParticlePhysics = (
   particles: Particle[],
   detectionScreen: THREE.Mesh | null,
@@ -11,8 +21,22 @@ export const updateParticlePhysics = (
   const time = Date.now() * 0.001;
 
   return particles.filter(particle => {
-    // Marks are stuck in place: no physics updates needed
+    // Stuck marks stay in place, then fade out and get consumed after their lifetime
     if (particle.userData.isMark) {
+      const lifetime = MARK_LIFETIME_SECONDS[activePhase] ?? 8;
+      const age = time - particle.userData.markTime;
+
+      if (age >= lifetime) {
+        onRemoveParticle(particle);
+        return false;
+      }
+
+      const fadeStart = lifetime - MARK_FADE_SECONDS;
+      if (age > fadeStart && particle.material instanceof THREE.MeshBasicMaterial) {
+        particle.material.transparent = true;
+        particle.material.opacity = Math.max(0, 1 - (age - fadeStart) / MARK_FADE_SECONDS);
+        particle.material.needsUpdate = true;
+      }
       return true;
     }
 

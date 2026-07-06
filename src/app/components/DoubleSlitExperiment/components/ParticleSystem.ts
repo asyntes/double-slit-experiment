@@ -136,4 +136,21 @@ export class ParticleSystem {
   getActiveParticleCount(): number {
     return this.particles.filter(particle => !particle.userData.isMark).length;
   }
+
+  // Safety cap: keeps at most maxMarks stuck particles, consuming the oldest first
+  limitMarks(maxMarks: number) {
+    const marks = this.particles.filter(particle => particle.userData.isMark);
+    if (marks.length <= maxMarks) return;
+
+    marks.sort((a, b) => a.userData.markTime - b.userData.markTime);
+    const marksToRemove = new Set(marks.slice(0, marks.length - maxMarks));
+
+    this.particles = this.particles.filter(particle => {
+      if (marksToRemove.has(particle)) {
+        this.removeParticle(particle);
+        return false;
+      }
+      return true;
+    });
+  }
 }
