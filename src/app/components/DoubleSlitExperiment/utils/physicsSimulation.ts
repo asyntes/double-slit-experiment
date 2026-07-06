@@ -47,16 +47,16 @@ export const updateParticlePhysics = (
     // Check hit with detection screen (z=30)
     if (detectionScreen && particle.position.z >= 30 &&
       Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
-      // All detected particles stick permanently on the screen until the phase changes
+      if (activePhase === 'electron') {
+        // Electrons never leave dots on the detection screen: the interference
+        // pattern building up there is rendered by the screen texture instead.
+        onRemoveParticle(particle);
+        return false;
+      }
+      // Proton / observer particles stick permanently until the phase restarts
       particle.position.z = 30;
       if (particle.material instanceof THREE.MeshBasicMaterial) {
-        if (activePhase === 'electron') {
-          // Keep the electron color, slightly dimmed like panel deposits
-          particle.material.color.multiplyScalar(0.65);
-        } else {
-          // Proton / observer detection marks
-          particle.material.color.setRGB(1.6, 1.6, 1.5);
-        }
+        particle.material.color.setRGB(1.6, 1.6, 1.5);
       }
       particle.userData.velocity.x = 0;
       particle.userData.velocity.y = 0;

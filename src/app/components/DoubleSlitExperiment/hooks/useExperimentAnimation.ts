@@ -16,15 +16,25 @@ interface AnimationProps {
   activePhase: string;
 }
 
-// Total number of particles fired per phase: the source has a finite budget,
-// so deposits on the screens are bounded and never need to be recycled.
-// The electron phase fires many more particles so the interference pattern
-// can build up point by point.
+// Total number of particles fired per phase. Proton and observer phases have
+// a finite budget: once it is exhausted and every particle has landed, the
+// whole phase animation restarts after a short pause. The electron phase
+// fires continuously and never stops.
 const PARTICLE_BUDGET: Record<string, number> = {
-  proton: 400,
-  observer: 400,
-  electron: 1500
+  proton: 800,
+  observer: 800,
+  electron: Infinity
 };
+
+// Maximum particles simultaneously in flight (marks stuck on screens excluded)
+const MAX_IN_FLIGHT = 150;
+
+// Pause between the end of a finite phase and its automatic restart
+const RESTART_DELAY_MS = 3000;
+
+// Cap on deposits stuck to the diffraction panel during the continuous
+// electron phase, so meshes don't accumulate without bound
+const MAX_ELECTRON_MARKS = 600;
 
 export const useExperimentAnimation = ({
   scene,
@@ -57,6 +67,9 @@ export const useExperimentAnimation = ({
     // Counts particles fired by the source in the current phase.
     // Resets whenever the effect re-runs (i.e. on phase change).
     let emittedCount = 0;
+    // Timestamp of when a finite phase ran out of particles, used to
+    // schedule the automatic restart of the phase animation.
+    let phaseEndedAt: number | null = null;
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
@@ -73,14 +86,15 @@ export const useExperimentAnimation = ({
       // Update experiment physics  
       const currentPhase = activePhase; // Use prop directly instead of ref
 
-      // Fire new particles only while the finite per-phase budget lasts,
-      // keeping at most 120 particles in flight at once. Marks stuck on the
+      // Fire new particles while the per-phase budget lasts (the electron
+      // budget is infinite, so electrons are fired continuously), keeping a
+      // bounded number of particles in flight at once. Marks stuck on the
       // screens don't count against the in-flight cap.
       const budget = PARTICLE_BUDGET[currentPhase] ?? 0;
-      if (budget > 0 && particleSystem && emittedCount < budget && particleSystem.getActiveParticleCount() < 120) {
+      if (budget > 0 && particleSystem && emittedCount < budget && particleSystem.getActiveParticleCount() < MAX_IN_FLIGHT) {
         const particlesToAdd = Math.min(
           5,
-          120 - particleSystem.getActiveParticleCount(),
+          MAX_IN_FLIGHT - particleSystem.getActiveParticleCount(),
           budget - emittedCount
         );
         for (let i = 0; i < particlesToAdd; i++) {
@@ -91,6 +105,33 @@ export const useExperimentAnimation = ({
           }
           emittedCount++;
         }
+      }
+
+      // During the continuous electron phase, drop the oldest deposits on the
+      // diffraction panel so they never accumulate without bound.
+      if (currentPhase === 'electron' && particleSystem) {
+        particleSystem.limitMarks(MAX_ELECTRON_MARKS);
+      }
+
+      // Once a finite phase has fired its whole budget and every particle has
+      // landed or left the scene, wait a few seconds and restart the phase
+      // animation from scratch.
+      if (
+        particleSystem &&
+        Number.isFinite(budget) &&
+        budget > 0 &&
+        emittedCount >= budget &&
+        particleSystem.getActiveParticleCount() === 0
+      ) {
+        if (phaseEndedAt === null) {
+          phaseEndedAt = performance.now();
+        } else if (performance.now() - phaseEndedAt >= RESTART_DELAY_MS) {
+          particleSystem.clearAllParticles();
+          emittedCount = 0;
+          phaseEndedAt = null;
+        }
+      } else {
+        phaseEndedAt = null;
       }
 
       // Update particle physics only if particle system exists

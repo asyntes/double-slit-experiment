@@ -111,6 +111,23 @@ export class ParticleSystem {
     this.particles = [];
   }
 
+  // Keeps at most maxMarks stuck deposits, removing the oldest ones first
+  limitMarks(maxMarks: number) {
+    const marks = this.particles.filter(particle => particle.userData.isMark);
+    if (marks.length <= maxMarks) {
+      return;
+    }
+    marks.sort((a, b) => a.userData.markTime - b.userData.markTime);
+    const toRemove = new Set(marks.slice(0, marks.length - maxMarks));
+    this.particles = this.particles.filter(particle => {
+      if (toRemove.has(particle)) {
+        this.removeParticle(particle);
+        return false;
+      }
+      return true;
+    });
+  }
+
   clearDetectionMarks() {
     this.particles = this.particles.filter(particle => {
       if (particle.userData.isMark) {
