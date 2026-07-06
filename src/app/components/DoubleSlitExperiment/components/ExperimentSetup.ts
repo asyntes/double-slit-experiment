@@ -10,6 +10,148 @@ export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial 
     side: THREE.DoubleSide
   });
 
+// Rear assembly modelled after real accelerator ion sources: a tapered
+// reducer, a ceramic high-voltage insulator stack, a bolted vacuum flange,
+// an HV terminal dome and power cables running down to a supply cabinet.
+const createGeneratorRearAssembly = (
+  bodyMaterial: THREE.MeshStandardMaterial,
+  ringMaterial: THREE.MeshStandardMaterial
+): THREE.Group => {
+  const rearGroup = new THREE.Group();
+
+  const ceramicMaterial = new THREE.MeshStandardMaterial({
+    color: 0xf2ede2,
+    metalness: 0.05,
+    roughness: 0.35
+  });
+  const darkMetalMaterial = new THREE.MeshStandardMaterial({
+    color: 0x3a4150,
+    metalness: 0.75,
+    roughness: 0.4
+  });
+  const cableMaterial = new THREE.MeshStandardMaterial({
+    color: 0x14161c,
+    metalness: 0.2,
+    roughness: 0.8
+  });
+
+  const addMesh = (mesh: THREE.Mesh) => {
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    rearGroup.add(mesh);
+    return mesh;
+  };
+
+  // Tapered reducer from the barrel down to the source chamber
+  const reducer = addMesh(
+    new THREE.Mesh(new THREE.CylinderGeometry(3.5, 1.9, 2.2, 48), bodyMaterial)
+  );
+  reducer.rotation.x = Math.PI / 2;
+  reducer.position.z = -7.1;
+
+  const reducerRim = addMesh(
+    new THREE.Mesh(new THREE.TorusGeometry(3.55, 0.15, 16, 64), ringMaterial)
+  );
+  reducerRim.position.z = -6.05;
+
+  // High-voltage insulator: metal core with ceramic corrugation discs
+  const insulatorCore = addMesh(
+    new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 4.2, 32), darkMetalMaterial)
+  );
+  insulatorCore.rotation.x = Math.PI / 2;
+  insulatorCore.position.z = -10.3;
+
+  for (let i = 0; i < 7; i++) {
+    const disc = addMesh(
+      new THREE.Mesh(new THREE.CylinderGeometry(2.05, 2.05, 0.28, 40), ceramicMaterial)
+    );
+    disc.rotation.x = Math.PI / 2;
+    disc.position.z = -8.5 - i * 0.6;
+  }
+
+  // Bolted vacuum flange closing the insulator stack
+  const flange = addMesh(
+    new THREE.Mesh(new THREE.CylinderGeometry(2.55, 2.55, 0.45, 48), ringMaterial)
+  );
+  flange.rotation.x = Math.PI / 2;
+  flange.position.z = -12.75;
+
+  const boltGeometry = new THREE.CylinderGeometry(0.13, 0.13, 0.62, 12);
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    const bolt = addMesh(new THREE.Mesh(boltGeometry, darkMetalMaterial));
+    bolt.rotation.x = Math.PI / 2;
+    bolt.position.set(Math.cos(angle) * 2.2, Math.sin(angle) * 2.2, -12.75);
+  }
+
+  // Rounded high-voltage terminal dome (corona-free electrode)
+  const dome = addMesh(
+    new THREE.Mesh(
+      new THREE.SphereGeometry(1.65, 40, 28, 0, Math.PI * 2, 0, Math.PI / 2),
+      bodyMaterial
+    )
+  );
+  dome.rotation.x = -Math.PI / 2;
+  dome.position.z = -12.95;
+
+  // Status light on the terminal, matching the emitter glow
+  const statusLight = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 20, 16),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffaa33).multiplyScalar(1.5) })
+  );
+  statusLight.position.set(0, 1.35, -14.0);
+  rearGroup.add(statusLight);
+
+  // Power supply cabinet on the floor behind the machine
+  const cabinet = addMesh(
+    new THREE.Mesh(new THREE.BoxGeometry(3.6, 4.6, 2.4), darkMetalMaterial)
+  );
+  cabinet.position.set(0, -5.3, -17.5);
+
+  const cabinetPanel = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.6, 0.5),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(0x77bbff).multiplyScalar(1.2) })
+  );
+  cabinetPanel.position.set(0, -3.7, -16.29);
+  rearGroup.add(cabinetPanel);
+
+  [-1.0, -0.4, 0.2].forEach((x, i) => {
+    const led = new THREE.Mesh(
+      new THREE.CircleGeometry(0.09, 16),
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color(i === 2 ? 0x33ff77 : 0xffaa33).multiplyScalar(1.4)
+      })
+    );
+    led.position.set(x, -4.5, -16.29);
+    rearGroup.add(led);
+  });
+
+  // Thick HV cables drooping from the terminal down into the cabinet
+  const cablePaths: THREE.Vector3[][] = [
+    [
+      new THREE.Vector3(0.75, 0.4, -13.4),
+      new THREE.Vector3(1.5, -1.6, -15.2),
+      new THREE.Vector3(1.35, -4.6, -16.6),
+      new THREE.Vector3(1.1, -5.6, -17.3)
+    ],
+    [
+      new THREE.Vector3(-0.75, 0.4, -13.4),
+      new THREE.Vector3(-1.5, -1.8, -15.4),
+      new THREE.Vector3(-1.3, -4.9, -16.7),
+      new THREE.Vector3(-1.0, -5.8, -17.3)
+    ]
+  ];
+  cablePaths.forEach(points => {
+    const curve = new THREE.CatmullRomCurve3(points);
+    const cable = addMesh(
+      new THREE.Mesh(new THREE.TubeGeometry(curve, 32, 0.16, 12), cableMaterial)
+    );
+    cable.castShadow = true;
+  });
+
+  return rearGroup;
+};
+
 const createGenerator = (scene: THREE.Scene) => {
   const generatorGroup = new THREE.Group();
 
@@ -37,6 +179,8 @@ const createGenerator = (scene: THREE.Scene) => {
     ring.castShadow = true;
     generatorGroup.add(ring);
   });
+
+  generatorGroup.add(createGeneratorRearAssembly(bodyMaterial, ringMaterial));
 
   // Glowing emitter aperture on the muzzle — sized to match laser beam and particle spread
   const apertureGeometry = new THREE.CircleGeometry(EMITTER_APERTURE_RADIUS, 48);
