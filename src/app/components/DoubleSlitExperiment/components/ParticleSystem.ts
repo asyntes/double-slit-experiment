@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { EMITTER_WORLD_Z } from './ExperimentSetup';
 
 export interface Particle extends THREE.Mesh {
   userData: {
@@ -29,10 +30,11 @@ export class ParticleSystem {
     });
 
     const proton = new THREE.Mesh(geometry, material);
+    const spawnZ = EMITTER_WORLD_Z + Math.random() * 0.08;
     proton.position.set(
       (Math.random() - 0.5) * 4.5,
       (Math.random() - 0.5) * 4.0,
-      0.5
+      spawnZ
     );
 
     proton.userData = {
@@ -59,10 +61,11 @@ export class ParticleSystem {
     });
 
     const electron = new THREE.Mesh(geometry, material);
+    const spawnZ = EMITTER_WORLD_Z + Math.random() * 0.08;
     electron.position.set(
       (Math.random() - 0.5) * 4.5,
       (Math.random() - 0.5) * 4.0,
-      0.5
+      spawnZ
     );
 
     electron.userData = {
