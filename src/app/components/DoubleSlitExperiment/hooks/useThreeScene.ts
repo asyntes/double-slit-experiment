@@ -57,8 +57,7 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
     map: texture,
     transparent: true,
     opacity: 0.9,
-    // Keep label luminance below the bloom threshold so text doesn't glow
-    color: 0xb9c1cf,
+    color: 0xffffff,
     depthWrite: false
   });
   const sprite = new THREE.Sprite(spriteMaterial);
