@@ -74,7 +74,6 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
 
 export const useThreeScene = () => {
   const [sceneReady, setSceneReady] = useState(false);
-  const [webglError, setWebglError] = useState<string | null>(null);
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -93,7 +92,6 @@ export const useThreeScene = () => {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // Drop any leftover canvas from a previous mount (HMR / fast navigation)
     while (mount.firstChild) {
       mount.removeChild(mount.firstChild);
     }
@@ -106,14 +104,12 @@ export const useThreeScene = () => {
         failIfMajorPerformanceCaveat: false
       });
     } catch {
-      setWebglError('WebGL is unavailable. Reload the page to try again.');
       return;
     }
 
     const gl = renderer.getContext();
     if (!gl) {
       renderer.dispose();
-      setWebglError('WebGL is unavailable. Reload the page to try again.');
       return;
     }
 
@@ -140,7 +136,6 @@ export const useThreeScene = () => {
 
     const handleContextLost = (event: Event) => {
       event.preventDefault();
-      setWebglError('WebGL context was lost. Reload the page to continue.');
       setSceneReady(false);
     };
     renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
@@ -159,12 +154,12 @@ export const useThreeScene = () => {
     keyLight.target.position.set(0, 0, 15);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.set(2048, 2048);
-    keyLight.shadow.camera.left = -85;
-    keyLight.shadow.camera.right = 85;
-    keyLight.shadow.camera.top = 85;
-    keyLight.shadow.camera.bottom = -85;
+    keyLight.shadow.camera.left = -60;
+    keyLight.shadow.camera.right = 60;
+    keyLight.shadow.camera.top = 60;
+    keyLight.shadow.camera.bottom = -60;
     keyLight.shadow.camera.near = 1;
-    keyLight.shadow.camera.far = 220;
+    keyLight.shadow.camera.far = 160;
     keyLight.shadow.bias = -0.0004;
     scene.add(keyLight);
     scene.add(keyLight.target);
@@ -220,7 +215,6 @@ export const useThreeScene = () => {
     particleSystem.createInitialProtons(50);
 
     setSceneReady(true);
-    setWebglError(null);
 
     return () => {
       setSceneReady(false);
@@ -236,8 +230,7 @@ export const useThreeScene = () => {
       composer.dispose();
       renderer.dispose();
 
-      const loseContext = gl.getExtension('WEBGL_lose_context');
-      loseContext?.loseContext();
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
 
       if (renderer.domElement.parentNode === mount) {
         mount.removeChild(renderer.domElement);
@@ -272,7 +265,6 @@ export const useThreeScene = () => {
     rightTrapezoidRef,
     particleSystemRef,
     observerRef,
-    sceneReady,
-    webglError
+    sceneReady
   };
 };
