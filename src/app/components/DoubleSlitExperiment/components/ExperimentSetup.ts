@@ -5,8 +5,16 @@ const EMITTER_APERTURE_RADIUS = 2.5;
 /** Generator sits at z = -5; the muzzle aperture is at local z ≈ 6. */
 export const GENERATOR_GROUP_Z = -5;
 export const EMITTER_APERTURE_LOCAL_Z = 6.01;
-export const EMITTER_WORLD_Z = GENERATOR_GROUP_Z + EMITTER_APERTURE_LOCAL_Z;
 export const SCENE_FLOOR_Y = -7.6;
+
+/** Must match the rear vessel radius in createGeneratorRearAssembly. */
+export const REAR_VESSEL_RADIUS = 14;
+
+/** Lifts the generator so the vessel underside meets the floor plane. */
+export const MACHINE_LIFT_Y = SCENE_FLOOR_Y + REAR_VESSEL_RADIUS;
+
+export const EMITTER_WORLD_Y = MACHINE_LIFT_Y;
+export const EMITTER_WORLD_Z = GENERATOR_GROUP_Z + EMITTER_APERTURE_LOCAL_Z;
 
 export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial =>
   new THREE.MeshStandardMaterial({
@@ -21,14 +29,17 @@ export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial 
 // penetrate below the floor plane.
 const createGeneratorRearAssembly = (
   bodyMaterial: THREE.MeshStandardMaterial,
-  ringMaterial: THREE.MeshStandardMaterial
+  ringMaterial: THREE.MeshStandardMaterial,
+  machineLiftY: number
 ): THREE.Group => {
   const rearGroup = new THREE.Group();
 
   const BARREL_RADIUS = 3.5;
-  const VESSEL_RADIUS = 14;
+  const VESSEL_RADIUS = REAR_VESSEL_RADIUS;
   const VESSEL_LENGTH = 40;
   const CONE_LENGTH = 6.5;
+
+  const worldToLocalY = (worldY: number) => worldY - machineLiftY;
 
   const BARREL_BACK_Z = -6;
   const CONE_BACK_Z = BARREL_BACK_Z - CONE_LENGTH;
@@ -121,9 +132,9 @@ const createGeneratorRearAssembly = (
   endCap.rotation.x = -Math.PI / 2;
   endCap.position.z = END_CAP_Z;
 
-  // Side legs: floor up to the vessel equator — three stations along the hull
-  const legHeight = -SCENE_FLOOR_Y;
-  const legCenterY = SCENE_FLOOR_Y + legHeight / 2;
+  // Side legs: floor up to the vessel equator (world y = machineLiftY)
+  const legHeight = machineLiftY - SCENE_FLOOR_Y;
+  const legCenterY = worldToLocalY(SCENE_FLOOR_Y + legHeight / 2);
   [-18, -32.5, -46].forEach(z => {
     [-1, 1].forEach(side => {
       addMesh(
@@ -166,13 +177,13 @@ const createGeneratorRearAssembly = (
   const cabinetZ = VESSEL_BACK_Z - 14;
   addMesh(
     new THREE.Mesh(new THREE.BoxGeometry(12, cabinetHeight, 5.5), darkMetalMaterial)
-  ).position.set(0, SCENE_FLOOR_Y + cabinetHeight / 2, cabinetZ);
+  ).position.set(0, worldToLocalY(SCENE_FLOOR_Y + cabinetHeight / 2), cabinetZ);
 
   const cabinetPanel = new THREE.Mesh(
     new THREE.PlaneGeometry(4.5, 1.0),
     new THREE.MeshBasicMaterial({ color: new THREE.Color(0x77bbff).multiplyScalar(1.2) })
   );
-  cabinetPanel.position.set(-6.01, SCENE_FLOOR_Y + 6.5, cabinetZ);
+  cabinetPanel.position.set(-6.01, worldToLocalY(SCENE_FLOOR_Y + 6.5), cabinetZ);
   cabinetPanel.rotation.y = -Math.PI / 2;
   rearGroup.add(cabinetPanel);
 
@@ -183,7 +194,7 @@ const createGeneratorRearAssembly = (
         color: new THREE.Color(i === 2 ? 0x33ff77 : 0xffaa33).multiplyScalar(1.4)
       })
     );
-    led.position.set(-6.01, SCENE_FLOOR_Y + 4.8, cabinetZ + z);
+    led.position.set(-6.01, worldToLocalY(SCENE_FLOOR_Y + 4.8), cabinetZ + z);
     led.rotation.y = -Math.PI / 2;
     rearGroup.add(led);
   });
@@ -194,13 +205,13 @@ const createGeneratorRearAssembly = (
       new THREE.Vector3(0.9, coronaCenterY, VESSEL_CENTER_Z - 2),
       new THREE.Vector3(cableOutset, coronaCenterY - 1.2, VESSEL_CENTER_Z - 8),
       new THREE.Vector3(cableOutset + 0.4, VESSEL_RADIUS * 0.25, VESSEL_BACK_Z - 4),
-      new THREE.Vector3(2, SCENE_FLOOR_Y + 7.5, cabinetZ)
+      new THREE.Vector3(2, worldToLocalY(SCENE_FLOOR_Y + 7.5), cabinetZ)
     ],
     [
       new THREE.Vector3(-0.9, coronaCenterY, VESSEL_CENTER_Z - 2),
       new THREE.Vector3(-cableOutset, coronaCenterY - 1.4, VESSEL_CENTER_Z - 8),
       new THREE.Vector3(-(cableOutset + 0.4), VESSEL_RADIUS * 0.2, VESSEL_BACK_Z - 4),
-      new THREE.Vector3(-2, SCENE_FLOOR_Y + 7.5, cabinetZ)
+      new THREE.Vector3(-2, worldToLocalY(SCENE_FLOOR_Y + 7.5), cabinetZ)
     ]
   ];
   cablePaths.forEach(points => {
@@ -239,7 +250,7 @@ const createGenerator = (scene: THREE.Scene) => {
     generatorGroup.add(ring);
   });
 
-  generatorGroup.add(createGeneratorRearAssembly(bodyMaterial, ringMaterial));
+  generatorGroup.add(createGeneratorRearAssembly(bodyMaterial, ringMaterial, MACHINE_LIFT_Y));
 
   // Glowing emitter aperture on the muzzle — sized to match laser beam and particle spread
   const apertureGeometry = new THREE.CircleGeometry(EMITTER_APERTURE_RADIUS, 48);
@@ -255,7 +266,7 @@ const createGenerator = (scene: THREE.Scene) => {
   apertureRim.position.z = 6.0;
   generatorGroup.add(apertureRim);
 
-  generatorGroup.position.set(0, 0, GENERATOR_GROUP_Z);
+  generatorGroup.position.set(0, MACHINE_LIFT_Y, GENERATOR_GROUP_Z);
   scene.add(generatorGroup);
   return generatorGroup;
 };
@@ -376,7 +387,7 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   });
   const lightBeam = new THREE.Mesh(beamGeometry, beamMaterial);
 
-  lightBeam.position.set(0, 0, EMITTER_WORLD_Z + beamLength / 2);
+  lightBeam.position.set(0, EMITTER_WORLD_Y, EMITTER_WORLD_Z + beamLength / 2);
   lightBeam.rotation.x = Math.PI / 2;
   lightBeam.visible = false;
   lightBeam.renderOrder = 1;
