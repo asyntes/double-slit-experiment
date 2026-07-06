@@ -10,6 +10,7 @@ import { useThreeScene } from './hooks/useThreeScene';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useExperimentAnimation } from './hooks/useExperimentAnimation';
 import { useViewportControl } from './hooks/useViewportControl';
+import { createDetectionScreenBackMaterial } from './components/ExperimentSetup';
 import { updateGeneratorLabel } from './components/SceneLabels';
 
 
@@ -31,10 +32,7 @@ export default function DoubleSlitExperiment() {
     });
     detectionScreenRef.current.material = interferenceMaterial;
 
-    const baseMaterial = new THREE.MeshBasicMaterial({
-      color: 0x333333,
-      side: THREE.DoubleSide
-    });
+    const baseMaterial = createDetectionScreenBackMaterial();
     detectionScreenBackRef.current.material = baseMaterial;
 
     const animate = () => {
@@ -141,10 +139,7 @@ export default function DoubleSlitExperiment() {
       rightTrapezoidRef.current.visible = showLightElements;
       observerRef.current.visible = showObserver;
 
-      const defaultMaterial = new THREE.MeshBasicMaterial({
-        color: 0x333333,
-        side: THREE.DoubleSide
-      });
+      const defaultMaterial = createDetectionScreenBackMaterial();
       detectionScreenBackRef.current.material = defaultMaterial;
 
       const transparentMaterial = new THREE.MeshBasicMaterial({
