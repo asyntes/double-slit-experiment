@@ -11,6 +11,7 @@ import { createSceneBackground } from '../components/SceneBackground';
 import { createSceneLabels } from '../components/SceneLabels';
 import { ParticleSystem } from '../components/ParticleSystem';
 import { disposeSceneResources } from '../utils/disposeThreeResources';
+import { clampOrbitControlsPan } from '../utils/clampOrbitControlsPan';
 
 const createObserver = (scene: THREE.Scene): THREE.Group => {
   const observerGroup = new THREE.Group();
@@ -195,6 +196,7 @@ export const useThreeScene = () => {
     controls.dampingFactor = 0.06;
     controls.minDistance = 1;
     controls.maxDistance = 60;
+    clampOrbitControlsPan(controls);
     controlsRef.current = controls;
 
     const { detectionScreen, detectionScreenBack, lightBeam, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);

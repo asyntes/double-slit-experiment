@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { ParticleSystem } from '../components/ParticleSystem';
 import { updateParticlePhysics } from '../utils/physicsSimulation';
+import { clampOrbitControlsPan } from '../utils/clampOrbitControlsPan';
 
 interface AnimationProps {
   scene: THREE.Scene | null;
@@ -63,6 +64,7 @@ export const useExperimentAnimation = ({
 
       if (controls) {
         controls.update();
+        clampOrbitControlsPan(controls);
       }
 
       // Update experiment physics  

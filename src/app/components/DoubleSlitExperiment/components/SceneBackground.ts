@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 /** Half-extent of the floor grid in world X/Z — barrel tail aligns with this edge. */
 export const SCENE_FLOOR_GRID_HALF = 140;
+/** Camera pan limit on ±X and ±Z (half the floor grid). */
+export const SCENE_FLOOR_PAN_HALF = SCENE_FLOOR_GRID_HALF / 2;
 export const SCENE_FLOOR_Y = -7.6;
 
 const createGradientDome = (): THREE.Mesh => {
