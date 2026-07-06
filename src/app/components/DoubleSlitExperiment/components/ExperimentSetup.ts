@@ -30,7 +30,8 @@ const createGenerator = (scene: THREE.Scene) => {
   const bodyMaterial = new THREE.MeshStandardMaterial({
     color: 0xd8dde6,
     metalness: 0.6,
-    roughness: 0.5
+    roughness: 0.5,
+    side: THREE.DoubleSide
   });
   const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
   body.rotation.x = Math.PI / 2;
@@ -42,7 +43,8 @@ const createGenerator = (scene: THREE.Scene) => {
   const ringMaterial = new THREE.MeshStandardMaterial({
     color: 0x6b7484,
     metalness: 0.65,
-    roughness: 0.55
+    roughness: 0.55,
+    side: THREE.DoubleSide
   });
   const ringSpacing = 12;
   const ringOffsets: number[] = [-4.5, -1.5, 1.5, 4.5];
