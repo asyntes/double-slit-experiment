@@ -11,6 +11,11 @@ export const updateParticlePhysics = (
   const time = Date.now() * 0.001;
 
   return particles.filter(particle => {
+    // Marks are stuck in place: no physics updates needed
+    if (particle.userData.isMark) {
+      return true;
+    }
+
     // Update particle position
     particle.position.x += particle.userData.velocity.x;
     particle.position.y += particle.userData.velocity.y;
@@ -25,12 +30,22 @@ export const updateParticlePhysics = (
           particle.position.y >= -2 && particle.position.y <= 2));
 
     if (hitsDiffractionPanel) {
-      onRemoveParticle(particle);
-      return false;
+      // Blocked particles stick to the front face of the diffraction panel
+      particle.position.z = 14.75;
+      if (particle.material instanceof THREE.MeshBasicMaterial) {
+        // Dim the HDR color so stuck particles glow less than flying ones
+        particle.material.color.multiplyScalar(0.55);
+      }
+      particle.userData.velocity.x = 0;
+      particle.userData.velocity.y = 0;
+      particle.userData.velocity.z = 0;
+      particle.userData.isMark = true;
+      particle.userData.markTime = time;
+      return true;
     }
 
     // Check hit with detection screen (z=30)
-    if (detectionScreen && !particle.userData.isMark && particle.position.z >= 30 &&
+    if (detectionScreen && particle.position.z >= 30 &&
       Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
       if (activePhase === 'electron') {
         // Electrons disappear on detection

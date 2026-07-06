@@ -21,7 +21,8 @@ export class ParticleSystem {
   }
 
   createSingleProton() {
-    const geometry = new THREE.SphereGeometry(0.06, 12, 8);
+    // Protons are drawn larger than electrons to suggest their much greater mass
+    const geometry = new THREE.SphereGeometry(0.1, 12, 8);
     // HDR color (values > 1) so the bloom pass makes particles glow
     const material = new THREE.MeshBasicMaterial({
       color: new THREE.Color(0xff5533).multiplyScalar(2.5),
@@ -51,7 +52,8 @@ export class ParticleSystem {
   }
 
   createSingleElectron() {
-    const geometry = new THREE.SphereGeometry(0.06, 12, 8);
+    // Electrons are drawn smaller than protons to suggest their much smaller mass
+    const geometry = new THREE.SphereGeometry(0.05, 12, 8);
     // HDR color (values > 1) so the bloom pass makes particles glow
     const material = new THREE.MeshBasicMaterial({
       color: new THREE.Color(0x3388ff).multiplyScalar(2.5),
@@ -129,5 +131,26 @@ export class ParticleSystem {
 
   getParticleCount(): number {
     return this.particles.length;
+  }
+
+  getActiveParticleCount(): number {
+    return this.particles.filter(particle => !particle.userData.isMark).length;
+  }
+
+  // Keeps at most maxMarks stuck particles, removing the oldest ones first
+  limitMarks(maxMarks: number) {
+    const marks = this.particles.filter(particle => particle.userData.isMark);
+    if (marks.length <= maxMarks) return;
+
+    marks.sort((a, b) => a.userData.markTime - b.userData.markTime);
+    const marksToRemove = new Set(marks.slice(0, marks.length - maxMarks));
+
+    this.particles = this.particles.filter(particle => {
+      if (marksToRemove.has(particle)) {
+        this.removeParticle(particle);
+        return false;
+      }
+      return true;
+    });
   }
 }
