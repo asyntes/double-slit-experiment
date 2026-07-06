@@ -49,29 +49,22 @@ const createTextLabel = (text: string): THREE.Group => {
   return labelGroup;
 };
 
-export const createSceneLabels = (scene: THREE.Scene): THREE.Group[] => {
-  const labels: THREE.Group[] = [];
-
+export const createSceneLabels = (scene: THREE.Scene): void => {
   const generatorLabel = createTextLabel('Particle Generator');
   generatorLabel.position.set(0, 4.5, 0);
   generatorLabel.scale.setScalar(2);
   generatorLabel.name = 'generatorLabel';
   scene.add(generatorLabel);
-  labels.push(generatorLabel);
 
   const diffractionSlitLabel = createTextLabel('Diffraction Slits');
   diffractionSlitLabel.position.set(0, 8.5, 15);
   diffractionSlitLabel.scale.setScalar(2);
   scene.add(diffractionSlitLabel);
-  labels.push(diffractionSlitLabel);
 
   const detectionScreenLabel = createTextLabel('Detection Screen');
   detectionScreenLabel.position.set(0, 8.5, 30);
   detectionScreenLabel.scale.setScalar(2);
   scene.add(detectionScreenLabel);
-  labels.push(detectionScreenLabel);
-
-  return labels;
 };
 
 export const updateGeneratorLabel = (scene: THREE.Scene, newText: string) => {
@@ -88,18 +81,4 @@ export const updateGeneratorLabel = (scene: THREE.Scene, newText: string) => {
     const newSprite = newLabelGroup.children[0];
     generatorLabel.add(newSprite);
   }
-};
-
-export const cleanupLabels = (scene: THREE.Scene | null, labels: THREE.Group[]) => {
-  labels.forEach(labelGroup => {
-    if (scene) {
-      scene.remove(labelGroup);
-    }
-    labelGroup.children.forEach(child => {
-      if (child instanceof THREE.Sprite && child.material.map) {
-        child.material.map.dispose();
-        child.material.dispose();
-      }
-    });
-  });
 };

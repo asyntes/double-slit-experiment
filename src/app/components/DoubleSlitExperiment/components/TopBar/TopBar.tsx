@@ -1,8 +1,6 @@
-import './TopBar.css';
-
 export default function TopBar() {
   return (
-    <div className="top-bar absolute top-0 left-0 right-0 bg-black/40 p-4 flex justify-between items-center z-10" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
+    <div className="absolute top-0 left-0 right-0 bg-black/40 p-4 flex justify-between items-center z-10" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
       <div>
         <h1 className="text-white text-lg font-semibold">DOUBLE SLIT EXPERIMENT</h1>
         <p className="text-white text-sm opacity-75">Simulation by Asyntes</p>

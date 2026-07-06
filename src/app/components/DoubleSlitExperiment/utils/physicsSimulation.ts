@@ -8,8 +8,6 @@ export const updateParticlePhysics = (
   onRemoveParticle: (particle: Particle) => void,
   activePhase: string = 'proton'
 ): Particle[] => {
-  const time = Date.now() * 0.001;
-
   return particles.filter(particle => {
     // Stuck marks stay in place permanently (until the phase changes)
     if (particle.userData.isMark) {
@@ -40,7 +38,6 @@ export const updateParticlePhysics = (
       particle.userData.velocity.y = 0;
       particle.userData.velocity.z = 0;
       particle.userData.isMark = true;
-      particle.userData.markTime = time;
       return true;
     }
 
@@ -63,7 +60,6 @@ export const updateParticlePhysics = (
       particle.userData.velocity.z = 0;
       particle.scale.setScalar(1.2);
       particle.userData.isMark = true;
-      particle.userData.markTime = time;
     }
 
     // Remove particles that are too far from the experiment area

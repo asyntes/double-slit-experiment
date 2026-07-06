@@ -81,11 +81,9 @@ export const useThreeScene = () => {
   const controlsRef = useRef<OrbitControls | null>(null);
   const detectionScreenRef = useRef<THREE.Mesh | null>(null);
   const detectionScreenBackRef = useRef<THREE.Mesh | null>(null);
-  const diffractionPanelRef = useRef<THREE.Group | null>(null);
   const lightBeamRef = useRef<THREE.Mesh | null>(null);
   const leftTrapezoidRef = useRef<THREE.Mesh | null>(null);
   const rightTrapezoidRef = useRef<THREE.Mesh | null>(null);
-  const labelsRef = useRef<THREE.Group[]>([]);
   const particleSystemRef = useRef<ParticleSystem | null>(null);
   const observerRef = useRef<THREE.Group | null>(null);
 
@@ -171,16 +169,14 @@ export const useThreeScene = () => {
     controls.maxDistance = 60;
     controlsRef.current = controls;
 
-    const { detectionScreen, detectionScreenBack, diffractionPanelGroup, lightBeam, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);
+    const { detectionScreen, detectionScreenBack, lightBeam, leftTrapezoid, rightTrapezoid } = createExperimentSetup(scene);
     detectionScreenRef.current = detectionScreen;
     detectionScreenBackRef.current = detectionScreenBack;
-    diffractionPanelRef.current = diffractionPanelGroup;
     lightBeamRef.current = lightBeam;
     leftTrapezoidRef.current = leftTrapezoid;
     rightTrapezoidRef.current = rightTrapezoid;
 
-    const labels = createSceneLabels(scene);
-    labelsRef.current = labels;
+    createSceneLabels(scene);
 
     const particleSystem = new ParticleSystem(scene);
     particleSystemRef.current = particleSystem;
@@ -210,11 +206,9 @@ export const useThreeScene = () => {
     controlsRef,
     detectionScreenRef,
     detectionScreenBackRef,
-    diffractionPanelRef,
     lightBeamRef,
     leftTrapezoidRef,
     rightTrapezoidRef,
-    labelsRef,
     particleSystemRef,
     observerRef,
     sceneReady
