@@ -71,12 +71,13 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   detectionScreen.rotation.x = 0;
   scene.add(detectionScreen);
 
-  // Detection screen back (background layer)
-  const backGeometry = new THREE.PlaneGeometry(20, 15);
+  // Detection screen back (background layer) — thin box so it casts a full ground shadow
+  const screenDepth = 0.12;
+  const backGeometry = new THREE.BoxGeometry(20, 15, screenDepth);
   const backMaterial = createDetectionScreenBackMaterial();
   const detectionScreenBack = new THREE.Mesh(backGeometry, backMaterial);
   detectionScreenBack.position.set(0, 0, 30.1);
-  detectionScreenBack.rotation.x = 0;
+  detectionScreenBack.castShadow = true;
   detectionScreenBack.receiveShadow = true;
   scene.add(detectionScreenBack);
 
