@@ -36,8 +36,7 @@ const createTextLabel = (text: string): THREE.Group => {
     map: texture,
     transparent: true,
     opacity: 0.9,
-    // Keep label luminance below the bloom threshold so text doesn't glow
-    color: 0xb9c1cf,
+    color: 0xffffff,
     // Without this the sprite's full quad (including fully transparent pixels)
     // writes to the depth buffer and occludes the additive laser beam drawn
     // afterwards, which shows up as invisible boxes cutting through the beam.
