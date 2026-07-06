@@ -15,20 +15,23 @@ export class ParticleSystem {
   private particles: Particle[] = [];
   private scene: THREE.Scene;
 
+  private static readonly protonGeometry = new THREE.SphereGeometry(0.1, 12, 8);
+  private static readonly protonMaterial = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0xff5533).multiplyScalar(2.5),
+    transparent: false
+  });
+  private static readonly electronGeometry = new THREE.SphereGeometry(0.05, 12, 8);
+  private static readonly electronMaterial = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0x3388ff).multiplyScalar(2.5),
+    transparent: false
+  });
+
   constructor(scene: THREE.Scene) {
     this.scene = scene;
   }
 
   createSingleProton() {
-    // Protons are drawn larger than electrons to suggest their much greater mass
-    const geometry = new THREE.SphereGeometry(0.1, 12, 8);
-    // HDR color (values > 1) so the bloom pass makes particles glow
-    const material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0xff5533).multiplyScalar(2.5),
-      transparent: false
-    });
-
-    const proton = new THREE.Mesh(geometry, material);
+    const proton = new THREE.Mesh(ParticleSystem.protonGeometry, ParticleSystem.protonMaterial);
     proton.position.set(
       (Math.random() - 0.5) * 4.5,
       (Math.random() - 0.5) * 4.0,
@@ -50,15 +53,7 @@ export class ParticleSystem {
   }
 
   createSingleElectron() {
-    // Electrons are drawn smaller than protons to suggest their much smaller mass
-    const geometry = new THREE.SphereGeometry(0.05, 12, 8);
-    // HDR color (values > 1) so the bloom pass makes particles glow
-    const material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0x3388ff).multiplyScalar(2.5),
-      transparent: false
-    });
-
-    const electron = new THREE.Mesh(geometry, material);
+    const electron = new THREE.Mesh(ParticleSystem.electronGeometry, ParticleSystem.electronMaterial);
     electron.position.set(
       (Math.random() - 0.5) * 4.5,
       (Math.random() - 0.5) * 4.0,
@@ -95,10 +90,6 @@ export class ParticleSystem {
 
   removeParticle(particle: Particle) {
     this.scene.remove(particle);
-    particle.geometry.dispose();
-    if (particle.material instanceof THREE.Material) {
-      particle.material.dispose();
-    }
   }
 
   clearAllParticles() {

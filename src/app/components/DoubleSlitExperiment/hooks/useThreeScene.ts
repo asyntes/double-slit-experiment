@@ -10,6 +10,7 @@ import { createExperimentSetup } from '../components/ExperimentSetup';
 import { createSceneBackground } from '../components/SceneBackground';
 import { createSceneLabels } from '../components/SceneLabels';
 import { ParticleSystem } from '../components/ParticleSystem';
+import { disposeSceneResources } from '../utils/disposeThreeResources';
 
 const createObserver = (scene: THREE.Scene): THREE.Group => {
   const observerGroup = new THREE.Group();
@@ -73,6 +74,7 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
 
 export const useThreeScene = () => {
   const [sceneReady, setSceneReady] = useState(false);
+  const [webglError, setWebglError] = useState<string | null>(null);
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -88,7 +90,32 @@ export const useThreeScene = () => {
   const observerRef = useRef<THREE.Group | null>(null);
 
   useEffect(() => {
-    if (!mountRef.current) return;
+    const mount = mountRef.current;
+    if (!mount) return;
+
+    // Drop any leftover canvas from a previous mount (HMR / fast navigation)
+    while (mount.firstChild) {
+      mount.removeChild(mount.firstChild);
+    }
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance',
+        failIfMajorPerformanceCaveat: false
+      });
+    } catch {
+      setWebglError('WebGL is unavailable. Reload the page to try again.');
+      return;
+    }
+
+    const gl = renderer.getContext();
+    if (!gl) {
+      renderer.dispose();
+      setWebglError('WebGL is unavailable. Reload the page to try again.');
+      return;
+    }
 
     const scene = new THREE.Scene();
     // Fallback color behind the gradient dome; fog matches the dome's horizon tone
@@ -102,15 +129,21 @@ export const useThreeScene = () => {
     camera.position.set(-19.165995152477358, 9.637643699188821, 5.055107657476825);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    mountRef.current.appendChild(renderer.domElement);
+    mount.appendChild(renderer.domElement);
     rendererRef.current = renderer;
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      setWebglError('WebGL context was lost. Reload the page to continue.');
+      setSceneReady(false);
+    };
+    renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
 
     // Image-based lighting so metallic PBR materials pick up soft reflections
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -187,13 +220,41 @@ export const useThreeScene = () => {
     particleSystem.createInitialProtons(50);
 
     setSceneReady(true);
+    setWebglError(null);
 
     return () => {
-      if (mountRef.current && rendererRef.current?.domElement) {
-        mountRef.current.removeChild(rendererRef.current.domElement);
+      setSceneReady(false);
+      renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
+
+      controls.dispose();
+      particleSystem.clearAllParticles();
+      disposeSceneResources(scene);
+      if (scene.environment) {
+        scene.environment.dispose();
       }
-      composerRef.current?.dispose();
-      rendererRef.current?.dispose();
+
+      composer.dispose();
+      renderer.dispose();
+
+      const loseContext = gl.getExtension('WEBGL_lose_context');
+      loseContext?.loseContext();
+
+      if (renderer.domElement.parentNode === mount) {
+        mount.removeChild(renderer.domElement);
+      }
+
+      sceneRef.current = null;
+      rendererRef.current = null;
+      composerRef.current = null;
+      cameraRef.current = null;
+      controlsRef.current = null;
+      detectionScreenRef.current = null;
+      detectionScreenBackRef.current = null;
+      lightBeamRef.current = null;
+      leftTrapezoidRef.current = null;
+      rightTrapezoidRef.current = null;
+      particleSystemRef.current = null;
+      observerRef.current = null;
     };
   }, []);
 
@@ -211,6 +272,7 @@ export const useThreeScene = () => {
     rightTrapezoidRef,
     particleSystemRef,
     observerRef,
-    sceneReady
+    sceneReady,
+    webglError
   };
 };

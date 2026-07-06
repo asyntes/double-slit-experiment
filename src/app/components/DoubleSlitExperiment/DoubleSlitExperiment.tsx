@@ -128,7 +128,8 @@ export default function DoubleSlitExperiment() {
     rightTrapezoidRef,
     particleSystemRef,
     observerRef,
-    sceneReady
+    sceneReady,
+    webglError
   } = useThreeScene();
 
   useEffect(() => {
@@ -235,6 +236,12 @@ export default function DoubleSlitExperiment() {
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
       <div ref={mountRef} className="w-full h-full" />
+
+      {webglError && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 px-6 text-center text-white">
+          <p className="max-w-md text-lg leading-relaxed">{webglError}</p>
+        </div>
+      )}
 
       <TopBar />
 
