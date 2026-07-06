@@ -1,5 +1,13 @@
 import * as THREE from 'three';
 
+export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial =>
+  new THREE.MeshStandardMaterial({
+    color: 0x30343c,
+    metalness: 0.1,
+    roughness: 0.85,
+    side: THREE.DoubleSide
+  });
+
 const createGenerator = (scene: THREE.Scene) => {
   const generatorGroup = new THREE.Group();
 
@@ -65,12 +73,7 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
 
   // Detection screen back (background layer)
   const backGeometry = new THREE.PlaneGeometry(20, 15);
-  const backMaterial = new THREE.MeshStandardMaterial({
-    color: 0x30343c,
-    metalness: 0.1,
-    roughness: 0.85,
-    side: THREE.DoubleSide
-  });
+  const backMaterial = createDetectionScreenBackMaterial();
   const detectionScreenBack = new THREE.Mesh(backGeometry, backMaterial);
   detectionScreenBack.position.set(0, 0, 30.1);
   detectionScreenBack.rotation.x = 0;
