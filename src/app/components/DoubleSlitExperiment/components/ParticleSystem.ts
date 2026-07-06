@@ -8,7 +8,6 @@ export interface Particle extends THREE.Mesh {
       z: number;
     };
     isMark: boolean;
-    markTime: number;
   };
 }
 
@@ -42,8 +41,7 @@ export class ParticleSystem {
         y: (Math.random() - 0.5) * 0.1,
         z: 0.5 + Math.random() * 0.1
       },
-      isMark: false,
-      markTime: 0
+      isMark: false
     };
 
     this.scene.add(proton);
@@ -73,8 +71,7 @@ export class ParticleSystem {
         y: (Math.random() - 0.5) * 0.1,
         z: 0.5 + Math.random() * 0.1
       },
-      isMark: false,
-      markTime: 0
+      isMark: false
     };
 
     this.scene.add(electron);
@@ -109,33 +106,6 @@ export class ParticleSystem {
       this.removeParticle(particle);
     });
     this.particles = [];
-  }
-
-  // Keeps at most maxMarks stuck deposits, removing the oldest ones first
-  limitMarks(maxMarks: number) {
-    const marks = this.particles.filter(particle => particle.userData.isMark);
-    if (marks.length <= maxMarks) {
-      return;
-    }
-    marks.sort((a, b) => a.userData.markTime - b.userData.markTime);
-    const toRemove = new Set(marks.slice(0, marks.length - maxMarks));
-    this.particles = this.particles.filter(particle => {
-      if (toRemove.has(particle)) {
-        this.removeParticle(particle);
-        return false;
-      }
-      return true;
-    });
-  }
-
-  clearDetectionMarks() {
-    this.particles = this.particles.filter(particle => {
-      if (particle.userData.isMark) {
-        this.removeParticle(particle);
-        return false;
-      }
-      return true;
-    });
   }
 
   getParticles(): Particle[] {

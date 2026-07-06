@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import * as THREE from 'three';
-import './DoubleSlitExperiment.css';
 import PhaseSelector from './components/PhaseSelector/PhaseSelector';
 import TopBar from './components/TopBar/TopBar';
 import OrientationWarning from './components/OrientationWarning/OrientationWarning';
@@ -124,21 +123,13 @@ export default function DoubleSlitExperiment() {
     controlsRef,
     detectionScreenRef,
     detectionScreenBackRef,
-    diffractionPanelRef,
     lightBeamRef,
     leftTrapezoidRef,
     rightTrapezoidRef,
-    labelsRef,
     particleSystemRef,
     observerRef,
     sceneReady
   } = useThreeScene();
-
-  useEffect(() => {
-    if (sceneReady) {
-      console.log('Scene ready, particle system available:', !!particleSystemRef.current);
-    }
-  }, [sceneReady]);
 
   useEffect(() => {
     if (lightBeamRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current && detectionScreenBackRef.current) {
@@ -187,8 +178,6 @@ export default function DoubleSlitExperiment() {
           break;
       }
       updateGeneratorLabel(sceneRef.current, labelText);
-
-      console.log('Light elements visibility:', showLightElements, 'Observer visibility:', showObserver, 'Generator label:', labelText, 'for phase:', activePhase);
     }
   }, [activePhase, sceneReady, restartElectronPhase]);
 
@@ -226,35 +215,18 @@ export default function DoubleSlitExperiment() {
 
 
   const handlePhaseChange = (phase: string) => {
-    console.log('Phase changing to:', phase);
-
     setActivePhase(phase);
 
     if (!particleSystemRef.current) {
-      console.log('No particle system available');
       return;
     }
 
-    if (phase === 'lightwave') {
-      console.log('Switching to lightwave: clearing all particles');
-      particleSystemRef.current.clearAllParticles();
-    } else if (phase === 'proton') {
-      console.log('Switching to proton: clearing and restarting');
-      particleSystemRef.current.clearAllParticles();
+    particleSystemRef.current.clearAllParticles();
+
+    if (phase === 'proton') {
       particleSystemRef.current.createInitialProtons(50);
-      console.log('New protons created:', particleSystemRef.current.getParticleCount());
-    } else if (phase === 'electron') {
-      console.log('Switching to electron: clearing and restarting');
-      particleSystemRef.current.clearAllParticles();
+    } else if (phase === 'electron' || phase === 'observer') {
       particleSystemRef.current.createInitialElectrons(50);
-      console.log('New electrons created:', particleSystemRef.current.getParticleCount());
-    } else if (phase === 'observer') {
-      console.log('Switching to observer: clearing and restarting with electrons');
-      particleSystemRef.current.clearAllParticles();
-      particleSystemRef.current.createInitialElectrons(50);
-      console.log('New electrons created for observer phase:', particleSystemRef.current.getParticleCount());
-    } else {
-      particleSystemRef.current.clearAllParticles();
     }
   };
 

@@ -47,21 +47,10 @@ export const useExperimentAnimation = ({
   const animationIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log('useExperimentAnimation - Dependencies:', {
-      scene: !!scene,
-      camera: !!camera,
-      renderer: !!renderer,
-      particleSystem: !!particleSystem,
-      sceneChildren: scene?.children.length
-    });
     if (!scene || !camera || !renderer) {
-      console.log('Animation hook missing basic deps, skipping');
       return;
     }
 
-    console.log('Starting animation loop');
-
-    let frameCount = 0;
     // Counts particles fired by the source in the current phase.
     // Resets whenever the effect re-runs (i.e. on phase change).
     let emittedCount = 0;
@@ -71,11 +60,6 @@ export const useExperimentAnimation = ({
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
-
-      frameCount++;
-      if (frameCount % 60 === 0) { // Log every 60 frames (roughly 1 second)
-        console.log('Animation running - Frame:', frameCount, 'Particles:', particleSystem?.getParticleCount() || 0);
-      }
 
       if (controls) {
         controls.update();
