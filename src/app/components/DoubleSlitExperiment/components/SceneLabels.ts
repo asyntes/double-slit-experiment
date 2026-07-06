@@ -16,8 +16,9 @@ const createTextLabel = (text: string): THREE.Group => {
   context.font = 'bold 72px Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.shadowColor = 'rgba(140, 190, 255, 0.85)';
-  context.shadowBlur = 16;
+  // Subtle halo only, so labels stay readable without glowing
+  context.shadowColor = 'rgba(140, 190, 255, 0.35)';
+  context.shadowBlur = 6;
 
   const lines = text.split('\n');
   const lineHeight = 90;
@@ -35,6 +36,8 @@ const createTextLabel = (text: string): THREE.Group => {
     map: texture,
     transparent: true,
     opacity: 0.9,
+    // Keep label luminance below the bloom threshold so text doesn't glow
+    color: 0xb9c1cf,
     // Without this the sprite's full quad (including fully transparent pixels)
     // writes to the depth buffer and occludes the additive laser beam drawn
     // afterwards, which shows up as invisible boxes cutting through the beam.

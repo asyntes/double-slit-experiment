@@ -45,13 +45,21 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
   context.font = 'bold 72px Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.shadowColor = 'rgba(120, 200, 255, 0.9)';
-  context.shadowBlur = 18;
+  // Subtle halo only, so the label stays readable without glowing
+  context.shadowColor = 'rgba(120, 200, 255, 0.35)';
+  context.shadowBlur = 6;
   context.fillText('Observer', canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 4;
-  const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  const spriteMaterial = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    opacity: 0.9,
+    // Keep label luminance below the bloom threshold so text doesn't glow
+    color: 0xb9c1cf,
+    depthWrite: false
+  });
   const sprite = new THREE.Sprite(spriteMaterial);
   sprite.scale.set(6, 1.5, 1);
   sprite.position.set(0, 1.2, 0);
