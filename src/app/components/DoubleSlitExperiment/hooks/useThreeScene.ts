@@ -46,9 +46,6 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
   context.font = 'bold 72px Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  // Subtle halo only, so the label stays readable without glowing
-  context.shadowColor = 'rgba(120, 200, 255, 0.35)';
-  context.shadowBlur = 6;
   context.fillText('Observer', canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -157,7 +154,7 @@ export const useThreeScene = () => {
       new THREE.Vector2(window.innerWidth, window.innerHeight),
       0.55,
       0.4,
-      0.6
+      1.0
     );
     composer.addPass(bloomPass);
     composer.addPass(new OutputPass());
