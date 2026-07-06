@@ -47,24 +47,23 @@ export const updateParticlePhysics = (
     // Check hit with detection screen (z=30)
     if (detectionScreen && particle.position.z >= 30 &&
       Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
-      if (activePhase === 'electron') {
-        // Electrons disappear on detection
-        onRemoveParticle(particle);
-        return false;
-      } else {
-        // Convert particle to detection mark (proton behavior)
-        particle.position.z = 30;
-        if (particle.material instanceof THREE.MeshBasicMaterial) {
-          // Slightly over-white HDR value so detection marks glow via bloom
+      // All detected particles stick permanently on the screen until the phase changes
+      particle.position.z = 30;
+      if (particle.material instanceof THREE.MeshBasicMaterial) {
+        if (activePhase === 'electron') {
+          // Keep the electron color, slightly dimmed like panel deposits
+          particle.material.color.multiplyScalar(0.65);
+        } else {
+          // Proton / observer detection marks
           particle.material.color.setRGB(1.6, 1.6, 1.5);
         }
-        particle.userData.velocity.x = 0;
-        particle.userData.velocity.y = 0;
-        particle.userData.velocity.z = 0;
-        particle.scale.setScalar(1.2);
-        particle.userData.isMark = true;
-        particle.userData.markTime = time;
       }
+      particle.userData.velocity.x = 0;
+      particle.userData.velocity.y = 0;
+      particle.userData.velocity.z = 0;
+      particle.scale.setScalar(1.2);
+      particle.userData.isMark = true;
+      particle.userData.markTime = time;
     }
 
     // Remove particles that are too far from the experiment area

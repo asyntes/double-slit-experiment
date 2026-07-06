@@ -84,9 +84,6 @@ export const useExperimentAnimation = ({
         );
 
         particleSystem.setParticles(updatedParticles);
-
-        // Keep the number of stuck marks bounded for performance
-        particleSystem.limitMarks(600);
       }
 
       if (composer) {
