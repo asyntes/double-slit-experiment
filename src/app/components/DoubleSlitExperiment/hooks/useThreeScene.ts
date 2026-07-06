@@ -7,6 +7,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { createExperimentSetup } from '../components/ExperimentSetup';
+import { createSceneBackground } from '../components/SceneBackground';
 import { createSceneLabels } from '../components/SceneLabels';
 import { ParticleSystem } from '../components/ParticleSystem';
 
@@ -96,9 +97,12 @@ export const useThreeScene = () => {
     if (!mountRef.current) return;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b0e14);
-    scene.fog = new THREE.Fog(0x0b0e14, 70, 170);
+    // Fallback color behind the gradient dome; fog matches the dome's horizon tone
+    scene.background = new THREE.Color(0x060a14);
+    scene.fog = new THREE.Fog(0x0d1424, 70, 190);
     sceneRef.current = scene;
+
+    createSceneBackground(scene);
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(-19.165995152477358, 9.637643699188821, 5.055107657476825);
