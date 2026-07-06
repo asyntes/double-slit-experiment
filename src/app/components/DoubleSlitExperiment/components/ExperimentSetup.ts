@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { SCENE_FLOOR_GRID_HALF } from './SceneBackground';
 
 const EMITTER_APERTURE_RADIUS = 2.5;
+/** Solid barrel face sits just behind the muzzle ring; glow disc is in front. */
+const MUZZLE_FACE_LOCAL_Z = 5.88;
 
 /** Generator sits at z = -5; the muzzle aperture is at local z ≈ 6. */
 export const GENERATOR_GROUP_Z = -5;
@@ -23,9 +25,8 @@ export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial 
 const createGenerator = (scene: THREE.Scene) => {
   const generatorGroup = new THREE.Group();
 
-  const barrelLength = EMITTER_APERTURE_LOCAL_Z - BARREL_BACK_LOCAL_Z;
-  // Open-ended so the muzzle face does not z-fight with the glow disc
-  const bodyGeometry = new THREE.CylinderGeometry(3.5, 3.5, barrelLength, 48, 1, true);
+  const barrelLength = MUZZLE_FACE_LOCAL_Z - BARREL_BACK_LOCAL_Z;
+  const bodyGeometry = new THREE.CylinderGeometry(3.5, 3.5, barrelLength, 48);
   const bodyMaterial = new THREE.MeshStandardMaterial({
     color: 0xd8dde6,
     metalness: 0.6,
@@ -33,7 +34,7 @@ const createGenerator = (scene: THREE.Scene) => {
   });
   const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
   body.rotation.x = Math.PI / 2;
-  body.position.z = (EMITTER_APERTURE_LOCAL_Z + BARREL_BACK_LOCAL_Z) / 2;
+  body.position.z = (MUZZLE_FACE_LOCAL_Z + BARREL_BACK_LOCAL_Z) / 2;
   body.castShadow = true;
   body.receiveShadow = true;
   generatorGroup.add(body);
