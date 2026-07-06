@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SCENE_FLOOR_GRID_HALF } from './SceneBackground';
 
 const EMITTER_APERTURE_RADIUS = 2.5;
 
@@ -7,9 +8,9 @@ export const GENERATOR_GROUP_Z = -5;
 export const EMITTER_APERTURE_LOCAL_Z = 6.01;
 export const EMITTER_WORLD_Z = GENERATOR_GROUP_Z + EMITTER_APERTURE_LOCAL_Z;
 
-/** Must match `scene.fog.near` in useThreeScene — barrel tail fades into the horizon. */
-const FOG_NEAR = 70;
-const BARREL_BACK_LOCAL_Z = -(FOG_NEAR - GENERATOR_GROUP_Z - 12);
+/** Barrel tail reaches the back edge of the floor grid plane. */
+const BARREL_BACK_WORLD_Z = -SCENE_FLOOR_GRID_HALF;
+const BARREL_BACK_LOCAL_Z = BARREL_BACK_WORLD_Z - GENERATOR_GROUP_Z;
 
 export const createDetectionScreenBackMaterial = (): THREE.MeshStandardMaterial =>
   new THREE.MeshStandardMaterial({
@@ -23,7 +24,8 @@ const createGenerator = (scene: THREE.Scene) => {
   const generatorGroup = new THREE.Group();
 
   const barrelLength = EMITTER_APERTURE_LOCAL_Z - BARREL_BACK_LOCAL_Z;
-  const bodyGeometry = new THREE.CylinderGeometry(3.5, 3.5, barrelLength, 48);
+  // Open-ended so the muzzle face does not z-fight with the glow disc
+  const bodyGeometry = new THREE.CylinderGeometry(3.5, 3.5, barrelLength, 48, 1, true);
   const bodyMaterial = new THREE.MeshStandardMaterial({
     color: 0xd8dde6,
     metalness: 0.6,
@@ -41,7 +43,12 @@ const createGenerator = (scene: THREE.Scene) => {
     metalness: 0.65,
     roughness: 0.55
   });
-  [-4.5, -1.5, 1.5, 4.5, -14, -26, -38, -50].forEach(offset => {
+  const ringSpacing = 12;
+  const ringOffsets: number[] = [-4.5, -1.5, 1.5, 4.5];
+  for (let z = -16; z >= BARREL_BACK_LOCAL_Z + 4; z -= ringSpacing) {
+    ringOffsets.push(z);
+  }
+  ringOffsets.forEach(offset => {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(3.55, 0.18, 16, 64), ringMaterial);
     ring.position.z = offset;
     ring.castShadow = true;
@@ -53,19 +60,23 @@ const createGenerator = (scene: THREE.Scene) => {
   tailRing.castShadow = true;
   generatorGroup.add(tailRing);
 
-  // Glowing emitter aperture on the muzzle — sized to match laser beam and particle spread
-  const apertureGeometry = new THREE.CircleGeometry(EMITTER_APERTURE_RADIUS, 48);
-  const apertureMaterial = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(0x77bbff).multiplyScalar(1.6)
-  });
-  const aperture = new THREE.Mesh(apertureGeometry, apertureMaterial);
-  aperture.position.z = 6.01;
-  generatorGroup.add(aperture);
-
   const apertureRimGeometry = new THREE.TorusGeometry(EMITTER_APERTURE_RADIUS + 0.15, 0.12, 16, 48);
   const apertureRim = new THREE.Mesh(apertureRimGeometry, ringMaterial);
   apertureRim.position.z = 6.0;
   generatorGroup.add(apertureRim);
+
+  // Glow disc sits slightly in front of the rim; no depth write avoids mesh interference
+  const apertureGeometry = new THREE.CircleGeometry(EMITTER_APERTURE_RADIUS * 0.92, 48);
+  const apertureMaterial = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0x77bbff).multiplyScalar(1.2),
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false
+  });
+  const aperture = new THREE.Mesh(apertureGeometry, apertureMaterial);
+  aperture.position.z = 6.14;
+  aperture.renderOrder = 2;
+  generatorGroup.add(aperture);
 
   generatorGroup.position.set(0, 0, GENERATOR_GROUP_Z);
   scene.add(generatorGroup);

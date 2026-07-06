@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 
+/** Half-extent of the floor grid in world X/Z — barrel tail aligns with this edge. */
+export const SCENE_FLOOR_GRID_HALF = 140;
+export const SCENE_FLOOR_Y = -7.6;
+
 const createGradientDome = (): THREE.Mesh => {
   const geometry = new THREE.SphereGeometry(400, 32, 24);
   const material = new THREE.ShaderMaterial({
@@ -104,7 +108,7 @@ const createStarField = (): THREE.Points => {
 
 const createFloor = (): THREE.Group => {
   const floorGroup = new THREE.Group();
-  const floorY = -7.6;
+  const floorY = SCENE_FLOOR_Y;
 
   const floorGeometry = new THREE.CircleGeometry(150, 64);
   const floorMaterial = new THREE.MeshStandardMaterial({
@@ -118,7 +122,7 @@ const createFloor = (): THREE.Group => {
   floor.receiveShadow = true;
   floorGroup.add(floor);
 
-  const grid = new THREE.GridHelper(280, 56, 0x4a5f8a, 0x2a3a5c);
+  const grid = new THREE.GridHelper(SCENE_FLOOR_GRID_HALF * 2, 56, 0x4a5f8a, 0x2a3a5c);
   grid.position.y = floorY + 0.04;
   const gridMaterial = grid.material as THREE.LineBasicMaterial;
   gridMaterial.transparent = true;
