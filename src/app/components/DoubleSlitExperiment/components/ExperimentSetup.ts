@@ -149,30 +149,6 @@ export const createExperimentSetup = (scene: THREE.Scene) => {
   addPanel(1, 4, 0, 0);
   addPanel(8.5, 4, 5.75, 0);
 
-  // Emissive edging that outlines the two slits
-  const slitEdgeMaterial = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(0x55aaff).multiplyScalar(1.4)
-  });
-  [-1, 1].forEach(slitCenterX => {
-    const slitFrame = new THREE.Group();
-    const edgeSize = 0.06;
-    const verticalEdge = new THREE.BoxGeometry(edgeSize, 4, panelDepth + 0.02);
-    const horizontalEdge = new THREE.BoxGeometry(1 + edgeSize * 2, edgeSize, panelDepth + 0.02);
-    const edges: Array<[THREE.BoxGeometry, number, number]> = [
-      [verticalEdge, -0.5 - edgeSize / 2, 0],
-      [verticalEdge, 0.5 + edgeSize / 2, 0],
-      [horizontalEdge, 0, 2 + edgeSize / 2],
-      [horizontalEdge, 0, -2 - edgeSize / 2]
-    ];
-    edges.forEach(([geometry, x, y]) => {
-      const edge = new THREE.Mesh(geometry, slitEdgeMaterial);
-      edge.position.set(x, y, 0);
-      slitFrame.add(edge);
-    });
-    slitFrame.position.set(slitCenterX, 0, 15);
-    diffractionPanelGroup.add(slitFrame);
-  });
-
   scene.add(diffractionPanelGroup);
 
   const beamRadius = EMITTER_APERTURE_RADIUS;
