@@ -22,7 +22,7 @@ const createGeneratorRearAssembly = (
 ): THREE.Group => {
   const rearGroup = new THREE.Group();
 
-  const VESSEL_RADIUS = 6.0;
+  const VESSEL_RADIUS = 7.0;
   const FLOOR_Y = -7.6;
 
   const ceramicMaterial = new THREE.MeshStandardMaterial({
@@ -50,136 +50,144 @@ const createGeneratorRearAssembly = (
 
   // Expansion cone flaring the barrel out into the main vessel
   const cone = addMesh(
-    new THREE.Mesh(new THREE.CylinderGeometry(3.5, VESSEL_RADIUS, 3.5, 48), bodyMaterial)
+    new THREE.Mesh(new THREE.CylinderGeometry(3.5, VESSEL_RADIUS, 4, 56), bodyMaterial)
   );
   cone.rotation.x = Math.PI / 2;
-  cone.position.z = -7.75;
+  cone.position.z = -8;
 
   const coneRim = addMesh(
     new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.16, 16, 64), ringMaterial)
   );
   coneRim.position.z = -6.05;
 
-  // Main pressure vessel — noticeably wider than the exit barrel
+  // Main pressure vessel — twice the barrel's diameter and twice its length,
+  // so the barrel reads as the exit snout of a much larger machine
   const vessel = addMesh(
-    new THREE.Mesh(new THREE.CylinderGeometry(VESSEL_RADIUS, VESSEL_RADIUS, 12, 56), bodyMaterial)
+    new THREE.Mesh(new THREE.CylinderGeometry(VESSEL_RADIUS, VESSEL_RADIUS, 24, 64), bodyMaterial)
   );
   vessel.rotation.x = Math.PI / 2;
-  vessel.position.z = -15.5;
+  vessel.position.z = -22;
 
-  // Reinforcement rings along the vessel, matching the barrel's style
-  [-11, -14, -17, -20].forEach(offset => {
+  // Reinforcement rings along the vessel, matching the barrel's style.
+  // Offsets keep clear of the saddles (-14.5, -29.5) and the bushing (z -22).
+  [-12.5, -17, -27, -31.5].forEach(offset => {
     const ring = addMesh(
-      new THREE.Mesh(new THREE.TorusGeometry(VESSEL_RADIUS + 0.08, 0.24, 16, 72), ringMaterial)
+      new THREE.Mesh(new THREE.TorusGeometry(VESSEL_RADIUS + 0.08, 0.28, 16, 80), ringMaterial)
     );
     ring.position.z = offset;
   });
 
   // Bolted flange where the rear end cap meets the vessel
   const flange = addMesh(
-    new THREE.Mesh(new THREE.CylinderGeometry(VESSEL_RADIUS + 0.35, VESSEL_RADIUS + 0.35, 0.55, 56), ringMaterial)
+    new THREE.Mesh(new THREE.CylinderGeometry(VESSEL_RADIUS + 0.35, VESSEL_RADIUS + 0.35, 0.6, 64), ringMaterial)
   );
   flange.rotation.x = Math.PI / 2;
-  flange.position.z = -21.5;
+  flange.position.z = -34;
 
-  const boltGeometry = new THREE.CylinderGeometry(0.16, 0.16, 0.75, 12);
-  for (let i = 0; i < 16; i++) {
-    const angle = (i / 16) * Math.PI * 2;
+  const boltGeometry = new THREE.CylinderGeometry(0.18, 0.18, 0.8, 12);
+  for (let i = 0; i < 18; i++) {
+    const angle = (i / 18) * Math.PI * 2;
     const bolt = addMesh(new THREE.Mesh(boltGeometry, darkMetalMaterial));
     bolt.rotation.x = Math.PI / 2;
-    bolt.position.set(Math.cos(angle) * (VESSEL_RADIUS - 0.1), Math.sin(angle) * (VESSEL_RADIUS - 0.1), -21.5);
+    bolt.position.set(Math.cos(angle) * (VESSEL_RADIUS - 0.35), Math.sin(angle) * (VESSEL_RADIUS - 0.35), -34);
   }
 
   // Rounded rear end cap (corona-free electrode dome)
   const endCap = addMesh(
     new THREE.Mesh(
-      new THREE.SphereGeometry(VESSEL_RADIUS, 48, 32, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.SphereGeometry(VESSEL_RADIUS, 56, 36, 0, Math.PI * 2, 0, Math.PI / 2),
       bodyMaterial
     )
   );
   endCap.rotation.x = -Math.PI / 2;
-  endCap.position.z = -21.75;
+  endCap.position.z = -34.25;
 
   // Floor saddles carrying the vessel's weight
-  [-12, -19].forEach(z => {
+  [-14.5, -29.5].forEach(z => {
     const saddle = addMesh(
-      new THREE.Mesh(new THREE.BoxGeometry(8.4, 1.9, 1.7), darkMetalMaterial)
+      new THREE.Mesh(new THREE.BoxGeometry(11, 0.9, 2.4), darkMetalMaterial)
     );
-    saddle.position.set(0, FLOOR_Y + 0.95, z);
+    saddle.position.set(0, FLOOR_Y + 0.45, z);
   });
 
-  // Ceramic high-voltage bushing standing on top of the vessel
+  // Ceramic high-voltage bushing standing on top of the vessel.
+  // The core sinks 0.3 into the curved vessel top so its rim never floats.
   const bushingCore = addMesh(
-    new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 3.6, 32), darkMetalMaterial)
+    new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 5.7, 32), darkMetalMaterial)
   );
-  bushingCore.position.set(0, VESSEL_RADIUS + 1.8, -15.5);
+  bushingCore.position.set(0, VESSEL_RADIUS + 2.55, -22);
 
   for (let i = 0; i < 6; i++) {
     const disc = addMesh(
-      new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.7, 0.3, 40), ceramicMaterial)
+      new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.4, 48), ceramicMaterial)
     );
-    disc.position.set(0, VESSEL_RADIUS + 0.6 + i * 0.55, -15.5);
+    disc.position.set(0, VESSEL_RADIUS + 0.8 + i * 0.8, -22);
   }
 
-  // Corona ball terminal on top of the bushing
+  // Corona ball terminal on top of the bushing; its underside clears the top
+  // ceramic disc (y 12.0 + 0.2) so the two never intersect
   const coronaBall = addMesh(
-    new THREE.Mesh(new THREE.SphereGeometry(1.3, 36, 24), bodyMaterial)
+    new THREE.Mesh(new THREE.SphereGeometry(2.2, 40, 28), bodyMaterial)
   );
-  coronaBall.position.set(0, VESSEL_RADIUS + 4.0, -15.5);
+  coronaBall.position.set(0, VESSEL_RADIUS + 7.4, -22);
 
-  // Status light on the corona ball
+  // Status light protruding from the front of the corona ball
   const statusLight = new THREE.Mesh(
-    new THREE.SphereGeometry(0.24, 20, 16),
+    new THREE.SphereGeometry(0.26, 20, 16),
     new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffaa33).multiplyScalar(1.5) })
   );
-  statusLight.position.set(0, VESSEL_RADIUS + 4.65, -16.7);
+  statusLight.position.set(0, VESSEL_RADIUS + 8.2, -24.15);
   rearGroup.add(statusLight);
 
   // Power supply cabinet on the floor behind the end cap
   const cabinet = addMesh(
-    new THREE.Mesh(new THREE.BoxGeometry(6, 6, 3.4), darkMetalMaterial)
+    new THREE.Mesh(new THREE.BoxGeometry(8, 7, 4.5), darkMetalMaterial)
   );
-  cabinet.position.set(0, FLOOR_Y + 3, -31);
+  cabinet.position.set(0, FLOOR_Y + 3.5, -46.5);
 
   // Glowing readout panel on the camera-facing side of the cabinet
   const cabinetPanel = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.4, 0.7),
+    new THREE.PlaneGeometry(3.2, 0.9),
     new THREE.MeshBasicMaterial({ color: new THREE.Color(0x77bbff).multiplyScalar(1.2) })
   );
-  cabinetPanel.position.set(-3.01, -2.6, -31);
+  cabinetPanel.position.set(-4.01, -2.2, -46.5);
   cabinetPanel.rotation.y = -Math.PI / 2;
   rearGroup.add(cabinetPanel);
 
   [-1.0, 0, 1.0].forEach((z, i) => {
     const led = new THREE.Mesh(
-      new THREE.CircleGeometry(0.12, 16),
+      new THREE.CircleGeometry(0.13, 16),
       new THREE.MeshBasicMaterial({
         color: new THREE.Color(i === 2 ? 0x33ff77 : 0xffaa33).multiplyScalar(1.4)
       })
     );
-    led.position.set(-3.01, -3.8, -31 + z);
+    led.position.set(-4.01, -3.6, -46.5 + z);
     led.rotation.y = -Math.PI / 2;
     rearGroup.add(led);
   });
 
-  // Thick HV cables drooping from the bushing terminal back into the cabinet
+  // Thick HV cables drooping from the corona ball back to the cabinet.
+  // The route stays high above the vessel and swings clear of the ceramic
+  // discs, the flange and the end cap before dipping into the cabinet top.
   const cablePaths: THREE.Vector3[][] = [
     [
-      new THREE.Vector3(0.6, VESSEL_RADIUS + 3.6, -16.3),
-      new THREE.Vector3(1.5, VESSEL_RADIUS + 0.5, -22.5),
-      new THREE.Vector3(1.3, 0.5, -28.5),
-      new THREE.Vector3(0.9, -1.5, -31)
+      new THREE.Vector3(0.9, VESSEL_RADIUS + 6.6, -23.5),
+      new THREE.Vector3(1.6, VESSEL_RADIUS + 4.5, -30),
+      new THREE.Vector3(1.9, VESSEL_RADIUS - 1.0, -40),
+      new THREE.Vector3(1.5, 0, -44.5),
+      new THREE.Vector3(1.2, -0.7, -46.5)
     ],
     [
-      new THREE.Vector3(-0.6, VESSEL_RADIUS + 3.6, -16.3),
-      new THREE.Vector3(-1.5, VESSEL_RADIUS + 0.2, -23),
-      new THREE.Vector3(-1.3, 0.2, -28.8),
-      new THREE.Vector3(-0.9, -1.5, -31)
+      new THREE.Vector3(-0.9, VESSEL_RADIUS + 6.6, -23.5),
+      new THREE.Vector3(-1.7, VESSEL_RADIUS + 4.2, -30.5),
+      new THREE.Vector3(-2.0, VESSEL_RADIUS - 1.4, -40.3),
+      new THREE.Vector3(-1.5, -0.2, -44.7),
+      new THREE.Vector3(-1.2, -0.8, -46.6)
     ]
   ];
   cablePaths.forEach(points => {
     const curve = new THREE.CatmullRomCurve3(points);
-    addMesh(new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.22, 12), cableMaterial));
+    addMesh(new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.26, 12), cableMaterial));
   });
 
   return rearGroup;

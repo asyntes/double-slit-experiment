@@ -126,12 +126,12 @@ export const useThreeScene = () => {
     keyLight.target.position.set(0, 0, 15);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.set(2048, 2048);
-    keyLight.shadow.camera.left = -45;
-    keyLight.shadow.camera.right = 45;
-    keyLight.shadow.camera.top = 45;
-    keyLight.shadow.camera.bottom = -45;
+    keyLight.shadow.camera.left = -60;
+    keyLight.shadow.camera.right = 60;
+    keyLight.shadow.camera.top = 60;
+    keyLight.shadow.camera.bottom = -60;
     keyLight.shadow.camera.near = 1;
-    keyLight.shadow.camera.far = 120;
+    keyLight.shadow.camera.far = 150;
     keyLight.shadow.bias = -0.0004;
     scene.add(keyLight);
     scene.add(keyLight.target);
