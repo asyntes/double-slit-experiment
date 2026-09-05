@@ -49,8 +49,8 @@ const sampleHit = (mode: PatternMode): { x: number; y: number } | null => {
       intensity = fringe * envelope;
     } else {
       // Two lobes centered near the geometric projections of the slits
-      const left = Math.exp(-((x + stripeRegionWidth * 0.22) / (stripeRegionWidth * 0.12)) ** 2);
-      const right = Math.exp(-((x - stripeRegionWidth * 0.22) / (stripeRegionWidth * 0.12)) ** 2);
+      const left = Math.exp(-(((x + stripeRegionWidth * 0.22) / (stripeRegionWidth * 0.12)) ** 2));
+      const right = Math.exp(-(((x - stripeRegionWidth * 0.22) / (stripeRegionWidth * 0.12)) ** 2));
       intensity = (left + right) * 0.55 * envelope;
     }
 
