@@ -15,15 +15,15 @@ interface AnimationProps {
   particleSystem: ParticleSystem | null;
   detectionScreen: THREE.Mesh | null;
   activePhase: string;
+  /** Explicit which-path measurement (alias: detectorOn). */
+  whichPathKnown?: boolean;
+  detectorOn?: boolean;
   intensity?: number;
   showPaths?: boolean;
-  /** Explicit which-path detector ON = path known. */
-  detectorOn?: boolean;
-  /** Alias used by some callers. */
-  whichPathKnown?: boolean;
   onPhaseCycleRestart?: (phase: string) => void;
-  onShotsFired?: (count: number) => void;
+  /** Fired when a particle reaches the detection screen (shot-by-shot). */
   onScreenHit?: () => void;
+  onShotsFired?: (count: number) => void;
 }
 
 const PARTICLE_BUDGET: Record<string, number> = {
@@ -44,26 +44,26 @@ export const useExperimentAnimation = ({
   particleSystem,
   detectionScreen,
   activePhase,
+  whichPathKnown,
+  detectorOn = false,
   intensity = 5,
   showPaths = true,
-  detectorOn = false,
-  whichPathKnown,
   onPhaseCycleRestart,
-  onShotsFired,
-  onScreenHit
+  onScreenHit,
+  onShotsFired
 }: AnimationProps) => {
   const animationIdRef = useRef<number | null>(null);
   const intensityRef = useRef(intensity);
   const showPathsRef = useRef(showPaths);
-  const detectorOnRef = useRef(whichPathKnown ?? detectorOn);
-  const onShotsFiredRef = useRef(onShotsFired);
+  const pathKnownRef = useRef(whichPathKnown ?? detectorOn);
   const onScreenHitRef = useRef(onScreenHit);
+  const onShotsFiredRef = useRef(onShotsFired);
 
   intensityRef.current = intensity;
   showPathsRef.current = showPaths;
-  detectorOnRef.current = whichPathKnown ?? detectorOn;
-  onShotsFiredRef.current = onShotsFired;
+  pathKnownRef.current = whichPathKnown ?? detectorOn;
   onScreenHitRef.current = onScreenHit;
+  onShotsFiredRef.current = onShotsFired;
 
   useEffect(() => {
     if (!scene || !camera || !renderer) {
@@ -72,7 +72,6 @@ export const useExperimentAnimation = ({
 
     let emittedCount = 0;
     let phaseEndedAt: number | null = null;
-    let lastEmitAt = 0;
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
@@ -84,25 +83,10 @@ export const useExperimentAnimation = ({
 
       const currentPhase = activePhase;
       const level = Math.max(1, Math.min(10, intensityRef.current));
-      const pathKnown = detectorOnRef.current;
-
-      let burstSize = Math.max(1, Math.round(level));
-      let emitIntervalMs = 0;
-      if (currentPhase === 'electron' && !pathKnown) {
-        burstSize = Math.max(1, Math.floor(level / 3));
-        emitIntervalMs = Math.max(16, 120 - level * 10);
-      }
+      const burstSize = Math.max(1, Math.round(level));
 
       const budget = PARTICLE_BUDGET[currentPhase] ?? 0;
-      const canEmitByTime = performance.now() - lastEmitAt >= emitIntervalMs;
-
-      if (
-        budget > 0 &&
-        particleSystem &&
-        emittedCount < budget &&
-        particleSystem.getActiveParticleCount() < MAX_IN_FLIGHT &&
-        canEmitByTime
-      ) {
+      if (budget > 0 && particleSystem && emittedCount < budget && particleSystem.getActiveParticleCount() < MAX_IN_FLIGHT) {
         const particlesToAdd = Math.min(
           burstSize,
           MAX_IN_FLIGHT - particleSystem.getActiveParticleCount(),
@@ -113,26 +97,23 @@ export const useExperimentAnimation = ({
           if (currentPhase === 'proton') {
             particleSystem.createSingleProton();
           } else if (currentPhase === 'electron' || currentPhase === 'observer') {
-            if (pathKnown) {
-              particleSystem.createSingleElectron({
-                forceSlit: Math.random() < 0.5 ? -1 : 1
-              });
-            } else {
-              particleSystem.createSingleElectron();
-            }
+            particleSystem.createSingleElectron();
           }
           emittedCount++;
           added++;
         }
         if (added > 0) {
-          lastEmitAt = performance.now();
           onShotsFiredRef.current?.(added);
         }
       }
 
       if (particleSystem) {
-        particleSystem.setPathsVisible(showPathsRef.current);
-        particleSystem.updateTrails();
+        if (typeof particleSystem.setPathsVisible === 'function') {
+          particleSystem.setPathsVisible(showPathsRef.current);
+        }
+        if (typeof particleSystem.updateTrails === 'function') {
+          particleSystem.updateTrails();
+        }
       }
 
       if (
@@ -156,7 +137,7 @@ export const useExperimentAnimation = ({
 
       if (particleSystem && particleSystem.getParticleCount() > 0) {
         const measuresPath =
-          detectorOnRef.current && (currentPhase === 'electron' || currentPhase === 'observer');
+          pathKnownRef.current && (currentPhase === 'electron' || currentPhase === 'observer');
 
         const updatedParticles = updateParticlePhysics(
           particleSystem.getParticles(),
