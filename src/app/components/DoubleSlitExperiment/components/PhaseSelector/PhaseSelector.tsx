@@ -35,7 +35,7 @@ export default function PhaseSelector({ activePhase, onPhaseChange }: PhaseSelec
         <PhaseButton label="Proton" active={activePhase === 'proton'} onClick={() => onPhaseChange('proton')} />
         <PhaseButton label="Light Wave" active={activePhase === 'lightwave'} onClick={() => onPhaseChange('lightwave')} />
         <PhaseButton label="Electron" active={activePhase === 'electron'} onClick={() => onPhaseChange('electron')} />
-        <PhaseButton label="Add an Observer" active={activePhase === 'observer'} onClick={() => onPhaseChange('observer')} />
+        <PhaseButton label="Which-path" active={activePhase === 'observer'} onClick={() => onPhaseChange('observer')} />
       </div>
 
       <div className="phase-explanation mt-3 p-3 bg-black/60 rounded-md border border-white/10">
@@ -45,9 +45,9 @@ export default function PhaseSelector({ activePhase, onPhaseChange }: PhaseSelec
             : activePhase === 'lightwave'
               ? 'Light waves demonstrate the wave nature of light, showing interference patterns when passing through double slits.'
               : activePhase === 'electron'
-                ? 'Electrons pass through both slits, as evidenced by the interference pattern on the screen, demonstrating wave-particle duality.'
+                ? 'Electrons pass through both slits, as evidenced by the interference pattern on the screen, demonstrating wave-particle duality. No which-path info → fringes.'
                 : activePhase === 'observer'
-                  ? 'Electrons are detected by the observer, causing the wave function to collapse. The interference pattern disappears, showing particle-like behavior with random impact points on the screen.'
+                  ? 'Which-path detector ON: we know which slit each electron took. The interference term vanishes — two blobs, not fringes. Knowing the path is not the same as casually looking.'
                   : 'Select a phase to see the experiment description.'
           }
         </p>
