@@ -14,6 +14,16 @@
   margin-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.which-path-caption {
+  margin: 0 0 0.6rem;
+  text-align: center;
+  color: #9adbc7;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.95;
+}
+
 /* Default landscape layout - single row */
 .phase-controls {
   display: flex;
@@ -23,6 +33,75 @@
 .phase-controls button {
   flex: 1;
   padding: 0.5rem 1rem !important;
+}
+
+.which-path-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: stretch;
+  margin-top: 0.65rem;
+}
+
+.which-path-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.which-path-toggle.is-on {
+  border-color: rgba(102, 255, 204, 0.65);
+  background: rgba(20, 60, 50, 0.75);
+}
+
+.which-path-toggle.is-off {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.toggle-state {
+  min-width: 2rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.which-path-toggle.is-on .toggle-state {
+  background: rgba(102, 255, 204, 0.35);
+  color: #dffef2;
+}
+
+.shot-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.shot-value {
+  font-variant-numeric: tabular-nums;
+  color: #9adbc7;
+  min-width: 3ch;
+  text-align: right;
 }
 
 /* Portrait layout - 2x2 grid */
@@ -41,6 +120,10 @@
     width: auto;
     flex: none;
   }
+
+  .shot-counter {
+    margin-left: 0;
+  }
 }
 
 /* Very small screens or short viewports */
@@ -52,15 +135,26 @@
     padding: 0.5rem;
     padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   }
-  
+
+  .which-path-caption {
+    font-size: 0.7rem;
+    margin-bottom: 0.4rem;
+  }
+
   .phase-controls button {
     padding: 0.5rem 0.25rem !important;
     font-size: 0.7rem !important;
   }
-  
+
   .phase-explanation {
     margin-top: 0.5rem !important;
     padding: 0.5rem !important;
     font-size: 0.75rem !important;
+  }
+
+  .which-path-toggle,
+  .shot-counter {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.5rem;
   }
 }
