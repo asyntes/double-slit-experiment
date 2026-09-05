@@ -2,12 +2,8 @@ import * as THREE from 'three';
 import { Particle } from '../components/ParticleSystem';
 
 export interface PhysicsOptions {
-  /** When true, which-path information is known → no interference (particle-like hits). */
-  whichPathKnown?: boolean;
-  /** Called once per particle that reaches the detection screen. */
-  onScreenHit?: () => void;
-  /** Hide in-flight particles (pattern-only mode). Marks stay visible. */
-  showPaths?: boolean;
+  /** When true, particles are steered through one slit (which-path measured). */
+  measuresPath?: boolean;
 }
 
 export const updateParticlePhysics = (
@@ -18,20 +14,21 @@ export const updateParticlePhysics = (
   activePhase: string = 'proton',
   options: PhysicsOptions = {}
 ): Particle[] => {
-  const {
-    whichPathKnown = activePhase === 'observer' || activePhase === 'whichpath',
-    onScreenHit,
-    showPaths = true
-  } = options;
+  const measuresPath = options.measuresPath === true;
 
   return particles.filter(particle => {
     // Stuck marks stay in place permanently (until the phase changes)
     if (particle.userData.isMark) {
-      particle.visible = true;
       return true;
     }
 
-    particle.visible = showPaths;
+    // When path is measured, gently steer toward the chosen slit before the panel
+    if (measuresPath && particle.userData.slitChoice && particle.position.z < 15) {
+      const targetX = particle.userData.slitChoice * 1.0;
+      const dx = targetX - particle.position.x;
+      particle.userData.velocity.x += dx * 0.002;
+      particle.userData.velocity.x *= 0.98;
+    }
 
     // Update particle position
     particle.position.x += particle.userData.velocity.x;
@@ -49,7 +46,6 @@ export const updateParticlePhysics = (
     if (hitsDiffractionPanel) {
       // Blocked particles stick to the front face of the diffraction panel
       particle.position.z = 14.75;
-      particle.visible = showPaths;
       if (particle.material instanceof THREE.MeshBasicMaterial) {
         // Dim the HDR color so stuck particles glow less than flying ones
         particle.material.color.multiplyScalar(0.55);
@@ -58,28 +54,25 @@ export const updateParticlePhysics = (
       particle.userData.velocity.y = 0;
       particle.userData.velocity.z = 0;
       particle.userData.isMark = true;
+      particle.visible = true;
+      if (particle.userData.trail) {
+        particle.userData.trail.visible = false;
+      }
       return true;
     }
 
     // Check hit with detection screen (z=30)
     if (detectionScreen && particle.position.z >= 30 &&
       Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
-      onScreenHit?.();
-
-      // Electron / which-path with unknown path: pattern builds on the screen texture
-      // (shot-by-shot). Path-known modes leave classical particle marks.
-      const buildsTexturePattern =
-        (activePhase === 'electron' || activePhase === 'whichpath' || activePhase === 'observer') &&
-        !whichPathKnown;
-
-      if (buildsTexturePattern) {
+      // Electron / which-path screen hits are painted on the accumulating
+      // texture (shot-by-shot). Flying particles are removed on impact so the
+      // pattern builds on the screen rather than as stuck dots.
+      if (activePhase === 'electron' || activePhase === 'observer') {
         onRemoveParticle(particle);
         return false;
       }
-
-      // Path known (detector ON) or proton: stick as a classical hit mark
+      // Proton particles stick permanently until the phase restarts
       particle.position.z = 30;
-      particle.visible = true;
       if (particle.material instanceof THREE.MeshBasicMaterial) {
         particle.material.color.setRGB(1.6, 1.6, 1.5);
       }
@@ -88,6 +81,10 @@ export const updateParticlePhysics = (
       particle.userData.velocity.z = 0;
       particle.scale.setScalar(1.2);
       particle.userData.isMark = true;
+      particle.visible = true;
+      if (particle.userData.trail) {
+        particle.userData.trail.visible = false;
+      }
     }
 
     // Remove particles that are too far from the experiment area
