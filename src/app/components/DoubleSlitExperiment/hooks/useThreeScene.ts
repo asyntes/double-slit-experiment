@@ -28,7 +28,7 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
   sphere.castShadow = true;
   observerGroup.add(sphere);
 
-  // Glowing "lens" aimed at the slits so the observer reads as a sensor
+  // Glowing "lens" aimed at the slits so the detector reads as a sensor
   const eyeDirection = new THREE.Vector3(-3, 0, 1).normalize();
   const eyeGeometry = new THREE.CircleGeometry(0.3, 24);
   const eyeMaterial = new THREE.MeshBasicMaterial({
@@ -45,10 +45,10 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
   const context = canvas.getContext('2d')!;
 
   context.fillStyle = '#ffffff';
-  context.font = 'bold 72px Arial';
+  context.font = 'bold 56px Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.fillText('Observer', canvas.width / 2, canvas.height / 2);
+  context.fillText('Which-Path Detector', canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 4;
@@ -60,7 +60,7 @@ const createObserver = (scene: THREE.Scene): THREE.Group => {
     depthWrite: false
   });
   const sprite = new THREE.Sprite(spriteMaterial);
-  sprite.scale.set(6, 1.5, 1);
+  sprite.scale.set(8, 1.5, 1);
   sprite.position.set(0, 1.2, 0);
   sprite.renderOrder = 2;
 
