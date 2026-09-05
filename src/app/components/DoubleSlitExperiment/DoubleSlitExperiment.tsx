@@ -145,10 +145,7 @@ export default function DoubleSlitExperiment() {
       (activePhase === 'electron' || activePhase === 'observer') &&
       detectorOn
     ) {
-      const pattern = ensurePattern();
-      clearPatternCanvas(pattern);
-      paintShots(pattern, 'classical', 0);
-      applyPatternMaterial(0.35);
+      applyPatternMaterial(1);
     }
 
     let labelText = 'Particle Generator';
@@ -256,7 +253,11 @@ export default function DoubleSlitExperiment() {
         showShotControls={showShotControls}
       />
 
-      <PhaseSelector activePhase={activePhase} onPhaseChange={handlePhaseChange} />
+      <PhaseSelector
+        activePhase={activePhase}
+        onPhaseChange={handlePhaseChange}
+        detectorOn={detectorOn}
+      />
 
       <OrientationWarning />
     </div>
