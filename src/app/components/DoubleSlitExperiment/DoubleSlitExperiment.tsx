@@ -80,12 +80,14 @@ export default function DoubleSlitExperiment() {
   const handleScreenHit = useCallback(() => {
     setShotCount(prev => prev + 1);
 
-    // Shot-by-shot texture when path is unknown (interference)
-    if (!detectorRef.current && (activePhase === 'electron' || activePhase === 'observer')) {
-      const pattern = ensurePattern();
-      paintShots(pattern, 'interference', 1);
-      applyPatternMaterial(1);
+    if (activePhase !== 'electron' && activePhase !== 'observer') {
+      return;
     }
+
+    const pattern = ensurePattern();
+    // Detector ON → classical mixture; OFF → interference fringes
+    paintShots(pattern, detectorRef.current ? 'classical' : 'interference', 1);
+    applyPatternMaterial(1);
   }, [activePhase, ensurePattern, applyPatternMaterial]);
 
   const handlePhaseCycleRestart = useCallback((phase: string) => {
@@ -145,11 +147,8 @@ export default function DoubleSlitExperiment() {
       (activePhase === 'electron' || activePhase === 'observer') &&
       detectorOn
     ) {
-      // Classical mixture preview texture while particle marks also accumulate
-      const pattern = ensurePattern();
-      clearPatternCanvas(pattern);
-      paintShots(pattern, 'classical', 0);
-      applyPatternMaterial(0.35);
+      // Classical mixture builds shot-by-shot via onScreenHit
+      applyPatternMaterial(1);
     }
 
     let labelText = 'Particle Generator';
@@ -256,7 +255,7 @@ export default function DoubleSlitExperiment() {
         showShotControls={showShotControls}
       />
 
-      <PhaseSelector activePhase={activePhase} onPhaseChange={handlePhaseChange} />
+      <PhaseSelector activePhase={activePhase} onPhaseChange={handlePhaseChange} detectorOn={detectorOn} />
 
       <OrientationWarning />
     </div>
