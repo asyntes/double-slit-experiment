@@ -15,23 +15,21 @@ interface AnimationProps {
   particleSystem: ParticleSystem | null;
   detectionScreen: THREE.Mesh | null;
   activePhase: string;
+  whichPathKnown: boolean;
+  showPaths: boolean;
+  /** 1–10; higher = faster electron emission for shot-by-shot build-up. */
+  intensity?: number;
   onPhaseCycleRestart?: (phase: string) => void;
+  onScreenHit?: () => void;
 }
 
-// Total number of particles fired per phase. Once the budget is exhausted and
-// every particle has landed, the whole phase animation restarts after a short
-// pause. The electron phase uses a larger budget so the interference pattern
-// fade-in can finish before the cycle restarts.
 const PARTICLE_BUDGET: Record<string, number> = {
   proton: 800,
   observer: 800,
   electron: 4800
 };
 
-// Maximum particles simultaneously in flight (marks stuck on screens excluded)
 const MAX_IN_FLIGHT = 150;
-
-// Pause between the end of a finite phase and its automatic restart
 const RESTART_DELAY_MS = 3000;
 
 export const useExperimentAnimation = ({
@@ -43,21 +41,31 @@ export const useExperimentAnimation = ({
   particleSystem,
   detectionScreen,
   activePhase,
-  onPhaseCycleRestart
+  whichPathKnown,
+  showPaths,
+  intensity = 4,
+  onPhaseCycleRestart,
+  onScreenHit
 }: AnimationProps) => {
   const animationIdRef = useRef<number | null>(null);
+  const whichPathRef = useRef(whichPathKnown);
+  const showPathsRef = useRef(showPaths);
+  const intensityRef = useRef(intensity);
+  const onScreenHitRef = useRef(onScreenHit);
+
+  whichPathRef.current = whichPathKnown;
+  showPathsRef.current = showPaths;
+  intensityRef.current = intensity;
+  onScreenHitRef.current = onScreenHit;
 
   useEffect(() => {
     if (!scene || !camera || !renderer) {
       return;
     }
 
-    // Counts particles fired by the source in the current phase.
-    // Resets whenever the effect re-runs (i.e. on phase change).
     let emittedCount = 0;
-    // Timestamp of when a finite phase ran out of particles, used to
-    // schedule the automatic restart of the phase animation.
     let phaseEndedAt: number | null = null;
+    let lastEmitAt = 0;
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
@@ -67,16 +75,32 @@ export const useExperimentAnimation = ({
         clampOrbitControlsPan(controls);
       }
 
-      // Update experiment physics  
-      const currentPhase = activePhase; // Use prop directly instead of ref
-
-      // Fire new particles while the per-phase budget lasts, keeping a bounded
-      // number of particles in flight at once. Marks stuck on the screens
-      // don't count against the in-flight cap.
+      const currentPhase = activePhase;
       const budget = PARTICLE_BUDGET[currentPhase] ?? 0;
-      if (budget > 0 && particleSystem && emittedCount < budget && particleSystem.getActiveParticleCount() < MAX_IN_FLIGHT) {
+      const pathKnown = whichPathRef.current;
+      const level = Math.max(1, Math.min(10, intensityRef.current));
+
+      // Electron + detector OFF: slower single-shot emission scaled by intensity
+      let batch = 5;
+      let emitIntervalMs = 0;
+      if (currentPhase === 'electron' && !pathKnown) {
+        batch = Math.max(1, Math.floor(level / 3));
+        emitIntervalMs = Math.max(16, 120 - level * 10);
+      } else if (currentPhase === 'observer' || (currentPhase === 'electron' && pathKnown)) {
+        batch = Math.max(1, Math.floor(level / 2));
+      }
+
+      const canEmitByTime = performance.now() - lastEmitAt >= emitIntervalMs;
+
+      if (
+        budget > 0 &&
+        particleSystem &&
+        emittedCount < budget &&
+        particleSystem.getActiveParticleCount() < MAX_IN_FLIGHT &&
+        canEmitByTime
+      ) {
         const particlesToAdd = Math.min(
-          5,
+          batch,
           MAX_IN_FLIGHT - particleSystem.getActiveParticleCount(),
           budget - emittedCount
         );
@@ -88,11 +112,11 @@ export const useExperimentAnimation = ({
           }
           emittedCount++;
         }
+        if (particlesToAdd > 0) {
+          lastEmitAt = performance.now();
+        }
       }
 
-      // Once a finite phase has fired its whole budget and every particle has
-      // landed or left the scene, wait a few seconds and restart the phase
-      // animation from scratch.
       if (
         particleSystem &&
         Number.isFinite(budget) &&
@@ -112,16 +136,19 @@ export const useExperimentAnimation = ({
         phaseEndedAt = null;
       }
 
-      // Update particle physics only if particle system exists
       if (particleSystem && particleSystem.getParticleCount() > 0) {
         const updatedParticles = updateParticlePhysics(
           particleSystem.getParticles(),
           detectionScreen,
           scene,
           (particle) => particleSystem.removeParticle(particle),
-          currentPhase
+          currentPhase,
+          {
+            whichPathKnown: whichPathRef.current,
+            showPaths: showPathsRef.current,
+            onScreenHit: () => onScreenHitRef.current?.()
+          }
         );
-
         particleSystem.setParticles(updatedParticles);
       }
 
