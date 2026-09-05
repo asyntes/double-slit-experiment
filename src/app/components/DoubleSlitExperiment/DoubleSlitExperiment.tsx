@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import PhaseSelector from './components/PhaseSelector/PhaseSelector';
+import ExperimentControls from './components/ExperimentControls/ExperimentControls';
 import TopBar from './components/TopBar/TopBar';
 import OrientationWarning from './components/OrientationWarning/OrientationWarning';
 import { useThreeScene } from './hooks/useThreeScene';
@@ -11,130 +12,27 @@ import { useExperimentAnimation } from './hooks/useExperimentAnimation';
 import { useViewportControl } from './hooks/useViewportControl';
 import { createDetectionScreenBackMaterial } from './components/ExperimentSetup';
 import { updateGeneratorLabel } from './components/SceneLabels';
-
-
-function createScreenTexture(options: {
-  whichPath: boolean;
-  shotCount: number;
-}): THREE.CanvasTexture {
-  const { whichPath, shotCount } = options;
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 384;
-  const ctx = canvas.getContext('2d')!;
-
-  ctx.fillStyle = '#333333';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const stripeRegionWidth = canvas.width * 0.5;
-  const stripeHeight = canvas.height * (4 / 15);
-  const samples = Math.max(200, Math.floor(shotCount));
-
-  ctx.fillStyle = '#ffffff';
-
-  for (let i = 0; i < samples; i++) {
-    const x = Math.random() * stripeRegionWidth - stripeRegionWidth / 2;
-    const y = (Math.random() - 0.5) * stripeHeight;
-    const normalizedX = Math.abs(x) / (stripeRegionWidth / 2);
-    const envelope = Math.exp(-normalizedX * normalizedX * 3);
-
-    // Two slit centers in the same coordinate system as the fringe region
-    const slit = stripeRegionWidth * 0.22;
-    const a1 = Math.exp(-((x + slit) ** 2) / (2 * (stripeRegionWidth * 0.12) ** 2));
-    const a2 = Math.exp(-((x - slit) ** 2) / (2 * (stripeRegionWidth * 0.12) ** 2));
-
-    let totalIntensity: number;
-    if (whichPath) {
-      // Classical mixture: no cross term → no fringes
-      totalIntensity = (a1 * a1 + a2 * a2) * envelope;
-    } else {
-      const fringe = Math.cos(x * 0.08) * Math.cos(x * 0.08);
-      totalIntensity = fringe * envelope;
-    }
-
-    const intensity = Math.random();
-    if (intensity < totalIntensity * (whichPath ? 0.85 : 1.0)) {
-      const particleX = centerX + x + (Math.random() - 0.5) * 2;
-      const particleY = centerY + y + (Math.random() - 0.5) * 2;
-
-      ctx.beginPath();
-      ctx.arc(particleX, particleY, 0.5 + Math.random() * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  return texture;
-}
-
+import {
+  clearPatternCanvas,
+  createEmptyPatternCanvas,
+  createFilledPatternTexture,
+  paintShots,
+  type PatternCanvas
+} from './utils/patternTextures';
 
 export default function DoubleSlitExperiment() {
   const [activePhase, setActivePhase] = useState('proton');
+  /** Explicit which-path detector: ON = path known = no interference. */
+  const [detectorOn, setDetectorOn] = useState(false);
+  /** Pattern-only vs show in-flight trajectories. */
   const [showPaths, setShowPaths] = useState(true);
-  const [shotCount, setShotCount] = useState(4000);
-  const phaseStartTime = useRef<number>(0);
-  const animationFrameRef = useRef<number>(0);
+  const [shotCount, setShotCount] = useState(0);
+  /** Fire rate multiplier for electron shot-by-shot build-up (1-10). */
+  const [intensity, setIntensity] = useState(4);
 
-  const whichPathActive = activePhase === 'observer';
-
-  const animateElectronPattern = useCallback(() => {
-    if (!detectionScreenRef.current || !detectionScreenBackRef.current) return;
-
-    const interferenceTexture = createScreenTexture({
-      whichPath: false,
-      shotCount
-    });
-    const interferenceMaterial = new THREE.MeshBasicMaterial({
-      map: interferenceTexture,
-      color: 0x727272,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0
-    });
-    detectionScreenRef.current.material = interferenceMaterial;
-
-    const baseMaterial = createDetectionScreenBackMaterial();
-    detectionScreenBackRef.current.material = baseMaterial;
-
-    const animate = () => {
-      if (!detectionScreenRef.current?.material) return;
-
-      const elapsed = Date.now() - phaseStartTime.current;
-      const duration = 60000;
-      const progress = Math.min(elapsed / duration, 1);
-
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
-
-      if (detectionScreenRef.current.material instanceof THREE.MeshBasicMaterial) {
-        detectionScreenRef.current.material.opacity = easedProgress;
-        detectionScreenRef.current.material.needsUpdate = true;
-      }
-
-      if (progress < 1 && activePhase === 'electron') {
-        animationFrameRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    animate();
-  }, [activePhase, shotCount]);
-
-  const restartElectronPhase = useCallback(() => {
-    phaseStartTime.current = Date.now();
-    animateElectronPattern();
-  }, [animateElectronPattern]);
-
-  const handlePhaseCycleRestart = useCallback((phase: string) => {
-    if (phase === 'electron') {
-      restartElectronPhase();
-    }
-  }, [restartElectronPhase]);
+  const patternRef = useRef<PatternCanvas | null>(null);
+  const detectorRef = useRef(detectorOn);
+  detectorRef.current = detectorOn;
 
   const {
     mountRef,
@@ -153,90 +51,133 @@ export default function DoubleSlitExperiment() {
     sceneReady
   } = useThreeScene();
 
+  const ensurePattern = useCallback((): PatternCanvas => {
+    if (!patternRef.current) {
+      patternRef.current = createEmptyPatternCanvas();
+    }
+    return patternRef.current;
+  }, []);
+
+  const applyPatternMaterial = useCallback((opacity = 1) => {
+    if (!detectionScreenRef.current) return;
+    const pattern = ensurePattern();
+    pattern.texture.needsUpdate = true;
+    detectionScreenRef.current.material = new THREE.MeshBasicMaterial({
+      map: pattern.texture,
+      color: 0x727272,
+      side: THREE.DoubleSide,
+      transparent: opacity < 1,
+      opacity
+    });
+  }, [ensurePattern, detectionScreenRef]);
+
+  const resetPattern = useCallback(() => {
+    const pattern = ensurePattern();
+    clearPatternCanvas(pattern);
+    setShotCount(0);
+  }, [ensurePattern]);
+
+  const handleScreenHit = useCallback(() => {
+    setShotCount(prev => prev + 1);
+
+    // Shot-by-shot texture when path is unknown (interference)
+    if (!detectorRef.current && (activePhase === 'electron' || activePhase === 'observer')) {
+      const pattern = ensurePattern();
+      paintShots(pattern, 'interference', 1);
+      applyPatternMaterial(1);
+    }
+  }, [activePhase, ensurePattern, applyPatternMaterial]);
+
+  const handlePhaseCycleRestart = useCallback((phase: string) => {
+    if (phase === 'electron' || phase === 'observer') {
+      resetPattern();
+      if (!detectorRef.current) {
+        applyPatternMaterial(1);
+      }
+    }
+  }, [resetPattern, applyPatternMaterial]);
+
   useEffect(() => {
-    if (lightBeamRef.current && leftTrapezoidRef.current && rightTrapezoidRef.current && observerRef.current && sceneRef.current && detectionScreenRef.current && detectionScreenBackRef.current) {
-      const showLightElements = activePhase === 'lightwave';
-      const showObserver = activePhase === 'observer';
+    if (
+      !lightBeamRef.current ||
+      !leftTrapezoidRef.current ||
+      !rightTrapezoidRef.current ||
+      !observerRef.current ||
+      !sceneRef.current ||
+      !detectionScreenRef.current ||
+      !detectionScreenBackRef.current
+    ) {
+      return;
+    }
 
-      lightBeamRef.current.visible = showLightElements;
-      leftTrapezoidRef.current.visible = showLightElements;
-      rightTrapezoidRef.current.visible = showLightElements;
-      observerRef.current.visible = showObserver;
+    const showLightElements = activePhase === 'lightwave' && showPaths;
+    const showDetectorMesh =
+      detectorOn && (activePhase === 'electron' || activePhase === 'observer');
 
-      const defaultMaterial = createDetectionScreenBackMaterial();
-      detectionScreenBackRef.current.material = defaultMaterial;
+    lightBeamRef.current.visible = showLightElements;
+    leftTrapezoidRef.current.visible = showLightElements;
+    rightTrapezoidRef.current.visible = showLightElements;
+    observerRef.current.visible = showDetectorMesh;
 
-      const transparentMaterial = new THREE.MeshBasicMaterial({
-        color: 0x333333,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0
+    detectionScreenBackRef.current.material = createDetectionScreenBackMaterial();
+    detectionScreenRef.current.material = new THREE.MeshBasicMaterial({
+      color: 0x333333,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0
+    });
+
+    resetPattern();
+
+    if (activePhase === 'lightwave') {
+      const texture = createFilledPatternTexture('interference', 8000);
+      detectionScreenRef.current.material = new THREE.MeshBasicMaterial({
+        map: texture,
+        color: 0x727272,
+        side: THREE.DoubleSide
       });
-      detectionScreenRef.current.material = transparentMaterial;
-
-      if (activePhase === 'lightwave') {
-        const interferenceTexture = createScreenTexture({
-          whichPath: false,
-          shotCount
-        });
-        const interferenceMaterial = new THREE.MeshBasicMaterial({
-          map: interferenceTexture,
-          color: 0x727272,
-          side: THREE.DoubleSide
-        });
-        detectionScreenRef.current.material = interferenceMaterial;
-      } else if (activePhase === 'electron') {
-        restartElectronPhase();
-      } else if (activePhase === 'observer') {
-        // Which-path ON: classical mixture texture (no fringes)
-        const classicalTexture = createScreenTexture({
-          whichPath: true,
-          shotCount
-        });
-        const classicalMaterial = new THREE.MeshBasicMaterial({
-          map: classicalTexture,
-          color: 0x727272,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.95
-        });
-        detectionScreenRef.current.material = classicalMaterial;
-      }
-
-      let labelText = 'Particle Generator';
-      switch (activePhase) {
-        case 'proton':
-          labelText = 'Proton Accelerator';
-          break;
-        case 'lightwave':
-          labelText = 'Laser';
-          break;
-        case 'electron':
-        case 'observer':
-          labelText = 'Electron Gun';
-          break;
-      }
-      updateGeneratorLabel(sceneRef.current, labelText);
+    } else if (
+      (activePhase === 'electron' || activePhase === 'observer') &&
+      !detectorOn
+    ) {
+      applyPatternMaterial(1);
+    } else if (
+      (activePhase === 'electron' || activePhase === 'observer') &&
+      detectorOn
+    ) {
+      // Classical mixture preview texture while particle marks also accumulate
+      const pattern = ensurePattern();
+      clearPatternCanvas(pattern);
+      paintShots(pattern, 'classical', 0);
+      applyPatternMaterial(0.35);
     }
-  }, [activePhase, sceneReady, restartElectronPhase, shotCount]);
 
-  useEffect(() => {
-    if (particleSystemRef.current) {
-      particleSystemRef.current.visible = showPaths;
+    let labelText = 'Particle Generator';
+    switch (activePhase) {
+      case 'proton':
+        labelText = 'Proton Accelerator';
+        break;
+      case 'lightwave':
+        labelText = 'Laser';
+        break;
+      case 'electron':
+      case 'observer':
+        labelText = 'Electron Gun';
+        break;
     }
-  }, [showPaths, sceneReady, activePhase]);
-
-  // Cleanup animation on unmount or phase change
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [activePhase]);
+    updateGeneratorLabel(sceneRef.current, labelText);
+  }, [
+    activePhase,
+    sceneReady,
+    detectorOn,
+    showPaths,
+    resetPattern,
+    ensurePattern,
+    applyPatternMaterial
+  ]);
 
   useViewportControl();
-  
+
   useResponsiveLayout({
     scene: sceneRef.current,
     camera: cameraRef.current,
@@ -254,19 +195,26 @@ export default function DoubleSlitExperiment() {
     particleSystem: particleSystemRef.current,
     detectionScreen: detectionScreenRef.current,
     activePhase,
-    onPhaseCycleRestart: handlePhaseCycleRestart
+    whichPathKnown: detectorOn,
+    showPaths,
+    intensity,
+    onPhaseCycleRestart: handlePhaseCycleRestart,
+    onScreenHit: handleScreenHit
   });
-
-
 
   const handlePhaseChange = (phase: string) => {
     setActivePhase(phase);
 
-    if (!particleSystemRef.current) {
-      return;
+    if (phase === 'electron') {
+      setDetectorOn(false);
+    } else if (phase === 'observer') {
+      setDetectorOn(true);
     }
 
+    if (!particleSystemRef.current) return;
+
     particleSystemRef.current.clearAllParticles();
+    setShotCount(0);
 
     if (phase === 'proton') {
       particleSystemRef.current.createInitialProtons(50);
@@ -275,7 +223,20 @@ export default function DoubleSlitExperiment() {
     }
   };
 
+  const handleDetectorChange = (on: boolean) => {
+    setDetectorOn(on);
+    if (activePhase === 'electron' || activePhase === 'observer') {
+      setActivePhase(on ? 'observer' : 'electron');
+    }
+    if (particleSystemRef.current) {
+      particleSystemRef.current.clearAllParticles();
+      particleSystemRef.current.createInitialElectrons(50);
+    }
+    setShotCount(0);
+  };
 
+  const showShotControls =
+    activePhase === 'electron' || activePhase === 'observer' || activePhase === 'proton';
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden" style={{ fontFamily: 'Nimbus Sans, Arial, sans-serif' }}>
@@ -283,43 +244,21 @@ export default function DoubleSlitExperiment() {
 
       <TopBar />
 
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-[210px] z-20 w-[min(920px,94vw)] flex flex-col gap-2 pointer-events-auto">
-        <div className="flex flex-wrap items-center gap-3 px-3 py-2 bg-black/70 border border-white/15 rounded-md text-white text-sm">
-          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showPaths}
-              onChange={(e) => setShowPaths(e.target.checked)}
-            />
-            Show paths
-          </label>
-          <label className="inline-flex items-center gap-2 flex-1 min-w-[180px]">
-            <span className="whitespace-nowrap">Shots</span>
-            <input
-              type="range"
-              min={200}
-              max={8000}
-              step={100}
-              value={shotCount}
-              onChange={(e) => setShotCount(Number(e.target.value))}
-              className="w-full"
-            />
-            <span className="tabular-nums w-12 text-right">{shotCount}</span>
-          </label>
-          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${whichPathActive ? 'bg-amber-400/90 text-black' : 'bg-white/15 text-white'}`}>
-            Detector {whichPathActive ? 'ON' : 'OFF'}
-          </span>
-        </div>
-        <p className="text-center text-white/85 text-sm tracking-wide">
-          sapere il percorso ≠ guardare
-          {whichPathActive ? ' — which-path ON, frange OFF' : ''}
-        </p>
-      </div>
+      <ExperimentControls
+        activePhase={activePhase}
+        detectorOn={detectorOn}
+        onDetectorChange={handleDetectorChange}
+        showPaths={showPaths}
+        onShowPathsChange={setShowPaths}
+        intensity={intensity}
+        onIntensityChange={setIntensity}
+        shotCount={shotCount}
+        showShotControls={showShotControls}
+      />
 
       <PhaseSelector activePhase={activePhase} onPhaseChange={handlePhaseChange} />
 
       <OrientationWarning />
-
     </div>
   );
 }
