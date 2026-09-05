@@ -17,25 +17,22 @@ interface AnimationProps {
   activePhase: string;
   intensity?: number;
   showPaths?: boolean;
+  /** Explicit which-path detector ON = path known. */
   detectorOn?: boolean;
+  /** Alias used by some callers. */
+  whichPathKnown?: boolean;
   onPhaseCycleRestart?: (phase: string) => void;
   onShotsFired?: (count: number) => void;
+  onScreenHit?: () => void;
 }
 
-// Total number of particles fired per phase. Once the budget is exhausted and
-// every particle has landed, the whole phase animation restarts after a short
-// pause. The electron phase uses a larger budget so the interference pattern
-// can build shot-by-shot before the cycle restarts.
 const PARTICLE_BUDGET: Record<string, number> = {
   proton: 800,
   observer: 4800,
   electron: 4800
 };
 
-// Maximum particles simultaneously in flight (marks stuck on screens excluded)
 const MAX_IN_FLIGHT = 150;
-
-// Pause between the end of a finite phase and its automatic restart
 const RESTART_DELAY_MS = 3000;
 
 export const useExperimentAnimation = ({
@@ -50,31 +47,32 @@ export const useExperimentAnimation = ({
   intensity = 5,
   showPaths = true,
   detectorOn = false,
+  whichPathKnown,
   onPhaseCycleRestart,
-  onShotsFired
+  onShotsFired,
+  onScreenHit
 }: AnimationProps) => {
   const animationIdRef = useRef<number | null>(null);
   const intensityRef = useRef(intensity);
   const showPathsRef = useRef(showPaths);
-  const detectorOnRef = useRef(detectorOn);
+  const detectorOnRef = useRef(whichPathKnown ?? detectorOn);
   const onShotsFiredRef = useRef(onShotsFired);
+  const onScreenHitRef = useRef(onScreenHit);
 
   intensityRef.current = intensity;
   showPathsRef.current = showPaths;
-  detectorOnRef.current = detectorOn;
+  detectorOnRef.current = whichPathKnown ?? detectorOn;
   onShotsFiredRef.current = onShotsFired;
+  onScreenHitRef.current = onScreenHit;
 
   useEffect(() => {
     if (!scene || !camera || !renderer) {
       return;
     }
 
-    // Counts particles fired by the source in the current phase.
-    // Resets whenever the effect re-runs (i.e. on phase change).
     let emittedCount = 0;
-    // Timestamp of when a finite phase ran out of particles, used to
-    // schedule the automatic restart of the phase animation.
     let phaseEndedAt: number | null = null;
+    let lastEmitAt = 0;
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
@@ -86,11 +84,25 @@ export const useExperimentAnimation = ({
 
       const currentPhase = activePhase;
       const level = Math.max(1, Math.min(10, intensityRef.current));
-      // Intensity 1 → ~1 particle/frame burst, 10 → up to 10
-      const burstSize = Math.max(1, Math.round(level));
+      const pathKnown = detectorOnRef.current;
+
+      let burstSize = Math.max(1, Math.round(level));
+      let emitIntervalMs = 0;
+      if (currentPhase === 'electron' && !pathKnown) {
+        burstSize = Math.max(1, Math.floor(level / 3));
+        emitIntervalMs = Math.max(16, 120 - level * 10);
+      }
 
       const budget = PARTICLE_BUDGET[currentPhase] ?? 0;
-      if (budget > 0 && particleSystem && emittedCount < budget && particleSystem.getActiveParticleCount() < MAX_IN_FLIGHT) {
+      const canEmitByTime = performance.now() - lastEmitAt >= emitIntervalMs;
+
+      if (
+        budget > 0 &&
+        particleSystem &&
+        emittedCount < budget &&
+        particleSystem.getActiveParticleCount() < MAX_IN_FLIGHT &&
+        canEmitByTime
+      ) {
         const particlesToAdd = Math.min(
           burstSize,
           MAX_IN_FLIGHT - particleSystem.getActiveParticleCount(),
@@ -101,12 +113,19 @@ export const useExperimentAnimation = ({
           if (currentPhase === 'proton') {
             particleSystem.createSingleProton();
           } else if (currentPhase === 'electron' || currentPhase === 'observer') {
-            particleSystem.createSingleElectron();
+            if (pathKnown) {
+              particleSystem.createSingleElectron({
+                forceSlit: Math.random() < 0.5 ? -1 : 1
+              });
+            } else {
+              particleSystem.createSingleElectron();
+            }
           }
           emittedCount++;
           added++;
         }
         if (added > 0) {
+          lastEmitAt = performance.now();
           onShotsFiredRef.current?.(added);
         }
       }
@@ -116,9 +135,6 @@ export const useExperimentAnimation = ({
         particleSystem.updateTrails();
       }
 
-      // Once a finite phase has fired its whole budget and every particle has
-      // landed or left the scene, wait a few seconds and restart the phase
-      // animation from scratch.
       if (
         particleSystem &&
         Number.isFinite(budget) &&
@@ -138,7 +154,6 @@ export const useExperimentAnimation = ({
         phaseEndedAt = null;
       }
 
-      // Update particle physics only if particle system exists
       if (particleSystem && particleSystem.getParticleCount() > 0) {
         const measuresPath =
           detectorOnRef.current && (currentPhase === 'electron' || currentPhase === 'observer');
@@ -149,7 +164,10 @@ export const useExperimentAnimation = ({
           scene,
           (particle) => particleSystem.removeParticle(particle),
           currentPhase,
-          { measuresPath }
+          {
+            measuresPath,
+            onScreenHit: () => onScreenHitRef.current?.()
+          }
         );
 
         particleSystem.setParticles(updatedParticles);
