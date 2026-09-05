@@ -57,9 +57,9 @@ export default function ExperimentControls({
 
   return (
     <div className="experiment-controls" style={{ fontFamily: 'Nimbus Sans, system-ui, sans-serif' }}>
-      <p className="path-caption" title="Knowing the path \u2260 looking">
-        <span className="path-caption-it">sapere il percorso \u2260 guardare</span>
-        <span className="path-caption-en">knowing the path \u2260 looking</span>
+      <p className="path-caption" title="Knowing the path ≠ looking">
+        <span className="path-caption-it">sapere il percorso ≠ guardare</span>
+        <span className="path-caption-en">knowing the path ≠ looking</span>
       </p>
 
       <div className="exp-controls-row">
@@ -106,8 +106,8 @@ export default function ExperimentControls({
       {showDetector && (
         <p className="detector-hint">
           {detectorOn
-            ? 'Detector ON \u2014 path is measured \u2192 classical mixture (no interference).'
-            : 'Detector OFF \u2014 path unknown \u2192 interference pattern.'}
+            ? 'Detector ON — path is measured → classical mixture (no interference).'
+            : 'Detector OFF — path unknown → interference pattern.'}
         </p>
       )}
     </div>
