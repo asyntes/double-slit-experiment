@@ -1,18 +1,37 @@
 import * as THREE from 'three';
 import { Particle } from '../components/ParticleSystem';
 
+export interface PhysicsOptions {
+  /** When true, which-path information is known → no interference (particle-like hits). */
+  whichPathKnown?: boolean;
+  /** Called once per particle that reaches the detection screen. */
+  onScreenHit?: () => void;
+  /** Hide in-flight particles (pattern-only mode). Marks stay visible. */
+  showPaths?: boolean;
+}
+
 export const updateParticlePhysics = (
   particles: Particle[],
   detectionScreen: THREE.Mesh | null,
   scene: THREE.Scene,
   onRemoveParticle: (particle: Particle) => void,
-  activePhase: string = 'proton'
+  activePhase: string = 'proton',
+  options: PhysicsOptions = {}
 ): Particle[] => {
+  const {
+    whichPathKnown = activePhase === 'observer' || activePhase === 'whichpath',
+    onScreenHit,
+    showPaths = true
+  } = options;
+
   return particles.filter(particle => {
     // Stuck marks stay in place permanently (until the phase changes)
     if (particle.userData.isMark) {
+      particle.visible = true;
       return true;
     }
+
+    particle.visible = showPaths;
 
     // Update particle position
     particle.position.x += particle.userData.velocity.x;
@@ -30,6 +49,7 @@ export const updateParticlePhysics = (
     if (hitsDiffractionPanel) {
       // Blocked particles stick to the front face of the diffraction panel
       particle.position.z = 14.75;
+      particle.visible = showPaths;
       if (particle.material instanceof THREE.MeshBasicMaterial) {
         // Dim the HDR color so stuck particles glow less than flying ones
         particle.material.color.multiplyScalar(0.55);
@@ -44,14 +64,22 @@ export const updateParticlePhysics = (
     // Check hit with detection screen (z=30)
     if (detectionScreen && particle.position.z >= 30 &&
       Math.abs(particle.position.x) <= 10 && Math.abs(particle.position.y) <= 7.5) {
-      if (activePhase === 'electron') {
-        // Electrons never leave dots on the detection screen: the interference
-        // pattern building up there is rendered by the screen texture instead.
+      onScreenHit?.();
+
+      // Electron / which-path with unknown path: pattern builds on the screen texture
+      // (shot-by-shot). Path-known modes leave classical particle marks.
+      const buildsTexturePattern =
+        (activePhase === 'electron' || activePhase === 'whichpath' || activePhase === 'observer') &&
+        !whichPathKnown;
+
+      if (buildsTexturePattern) {
         onRemoveParticle(particle);
         return false;
       }
-      // Proton / observer particles stick permanently until the phase restarts
+
+      // Path known (detector ON) or proton: stick as a classical hit mark
       particle.position.z = 30;
+      particle.visible = true;
       if (particle.material instanceof THREE.MeshBasicMaterial) {
         particle.material.color.setRGB(1.6, 1.6, 1.5);
       }
