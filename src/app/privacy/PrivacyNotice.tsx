@@ -66,7 +66,7 @@ export default function PrivacyNotice() {
   }, []);
 
   return (
-    <main className="privacy-page min-h-screen bg-black text-white">
+    <main lang={language} className="privacy-page min-h-screen bg-black text-white">
       <div className="mx-auto w-full max-w-[760px] px-5 pb-16 pt-10 md:px-8 md:pb-20 md:pt-14">
         <div className="mb-8 flex items-center justify-between gap-4">
           <Link
@@ -75,7 +75,7 @@ export default function PrivacyNotice() {
           >
             {copy.back}
           </Link>
-          <div className="flex items-center gap-2 text-sm uppercase tracking-wide">
+          <div className="flex items-center gap-2 text-sm uppercase tracking-wide" role="group" aria-label={language === 'it' ? 'Lingua' : 'Language'}>
             <button
               type="button"
               onClick={() => setLanguage('it')}
