@@ -67,7 +67,7 @@ export default function PrivacyNotice() {
 
   return (
     <main lang={language} className="privacy-page min-h-screen bg-black text-white">
-      <div className="mx-auto w-full max-w-[760px] px-5 pb-16 pt-10 md:px-8 md:pb-20 md:pt-14">
+      <div className="mx-auto w-full max-w-[47.5rem] px-5 pb-16 pt-10 md:px-8 md:pb-20 md:pt-14">
         <div className="mb-8 flex items-center justify-between gap-4">
           <Link
             href="/"
